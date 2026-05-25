@@ -1,0 +1,58 @@
+<div class="page">
+  <div class="page-header">
+    <h2 class="page-title">Alumnos</h2>
+    <label class="import-btn" matTooltip="Importar desde Excel">
+      @if (importing()) { <mat-spinner diameter="20" /> } @else { <mat-icon>upload_file</mat-icon> Importar Excel }
+      <input type="file" accept=".xlsx,.xls" (change)="importExcel($event)" hidden />
+    </label>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar</mat-label>
+        <mat-icon matSuffix>search</mat-icon>
+        <input matInput (input)="applyFilter($event)" placeholder="Matrícula, nombre, correo…" />
+      </mat-form-field>
+
+      @if (loading()) {
+        <div class="center"><mat-spinner diameter="40" /></div>
+      } @else {
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" matSort class="full-width">
+            <ng-container matColumnDef="matricula">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Matrícula</th>
+              <td mat-cell *matCellDef="let r">{{ r.matricula }}</td>
+            </ng-container>
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+              <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="apellido">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Apellido</th>
+              <td mat-cell *matCellDef="let r">{{ r.apellido }}</td>
+            </ng-container>
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Correo</th>
+              <td mat-cell *matCellDef="let r">{{ r.email }}</td>
+            </ng-container>
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let r">
+                <button mat-icon-button color="warn" (click)="darDeBaja(r)" matTooltip="Dar de baja">
+                  <mat-icon>person_off</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">Sin resultados</td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator [pageSizeOptions]="[10,25,50]" showFirstLastButtons />
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

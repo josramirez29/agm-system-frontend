@@ -1,0 +1,34 @@
+<div class="dashboard">
+  <h2 class="page-title">Dashboard</h2>
+
+  @if (loading()) {
+    <div class="center"><mat-spinner /></div>
+  } @else {
+    <div class="stats-grid">
+      @for (s of stats(); track s.label) {
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-body">
+              <div class="stat-info">
+                <p class="stat-label">{{ s.label }}</p>
+                <p class="stat-value">{{ s.value }}</p>
+              </div>
+              <div class="stat-icon" [style.background]="s.color + '1a'">
+                <mat-icon [style.color]="s.color">{{ s.icon }}</mat-icon>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Bienvenido al Panel de Administración</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>Usa el menú lateral para gestionar periodos, materias, docentes y alumnos del sistema AGM.</p>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

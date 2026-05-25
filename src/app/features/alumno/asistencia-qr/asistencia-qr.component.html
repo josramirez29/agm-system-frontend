@@ -1,0 +1,104 @@
+<div class="page">
+  <h2 class="page-title">Mi QR de Asistencia</h2>
+
+  @if (!configured()) {
+    <!-- CONFIGURACIÓN INICIAL -->
+    <mat-card class="setup-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="card-icon">person_search</mat-icon>
+        <mat-card-title>Configura tu perfil de alumno</mat-card-title>
+        <mat-card-subtitle>Ingresa tu matrícula y el NRC de tu materia para generar tu QR</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="setupForm" (ngSubmit)="configure()" class="setup-form">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Matrícula</mat-label>
+            <mat-icon matSuffix>badge</mat-icon>
+            <input matInput formControlName="matricula" placeholder="Ej. 202312345" />
+            @if (setupForm.get('matricula')?.touched) {
+              @if (setupForm.get('matricula')?.hasError('required')) {
+                <mat-error>La matrícula es obligatoria</mat-error>
+              } @else if (setupForm.get('matricula')?.hasError('minlength')) {
+                <mat-error>Mínimo 6 caracteres</mat-error>
+              }
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>NRC de la materia</mat-label>
+            <mat-icon matSuffix>menu_book</mat-icon>
+            <input matInput formControlName="nrc" placeholder="Ej. 12345" />
+            @if (setupForm.get('nrc')?.touched) {
+              @if (setupForm.get('nrc')?.hasError('required')) {
+                <mat-error>El NRC es obligatorio</mat-error>
+              } @else if (setupForm.get('nrc')?.hasError('minlength')) {
+                <mat-error>Mínimo 3 caracteres</mat-error>
+              }
+            }
+          </mat-form-field>
+
+          <button mat-flat-button color="primary" type="submit" [disabled]="loading()" class="submit-btn">
+            @if (loading()) { <mat-spinner diameter="20" /> } @else {
+              <mat-icon>qr_code_2</mat-icon> Generar mi QR
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <!-- QR GENERADO -->
+    <div class="qr-layout">
+      <mat-card class="qr-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="card-icon-green">verified</mat-icon>
+          <mat-card-title>Tu código QR de asistencia</mat-card-title>
+          <mat-card-subtitle>Matrícula: <strong>{{ matricula() }}</strong></mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content class="qr-content">
+          <div class="qr-wrapper">
+            <qrcode
+              [qrdata]="qrData()"
+              [width]="260"
+              [margin]="2"
+              errorCorrectionLevel="M"
+              [colorDark]="'#004d40'"
+              [colorLight]="'#ffffff'">
+            </qrcode>
+          </div>
+          <p class="qr-hint">
+            <mat-icon>info</mat-icon>
+            Muestra este código al docente cuando abra la sesión de asistencia
+          </p>
+        </mat-card-content>
+        <mat-card-actions class="qr-actions">
+          <button mat-stroked-button (click)="generateQr()">
+            <mat-icon>refresh</mat-icon> Actualizar QR
+          </button>
+          <button mat-button color="warn" (click)="resetSetup()">
+            <mat-icon>settings</mat-icon> Cambiar perfil
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <mat-card class="info-card">
+        <mat-card-header><mat-card-title>¿Cómo funciona?</mat-card-title></mat-card-header>
+        <mat-card-content>
+          <ol class="steps">
+            <li>
+              <mat-icon>play_circle</mat-icon>
+              <span>El docente inicia una <strong>sesión de asistencia</strong> desde su portal</span>
+            </li>
+            <li>
+              <mat-icon>qr_code_2</mat-icon>
+              <span>Muestra <strong>este QR</strong> al docente para que lo escanee</span>
+            </li>
+            <li>
+              <mat-icon>check_circle</mat-icon>
+              <span>Tu asistencia quedará registrada <strong>automáticamente</strong></span>
+            </li>
+          </ol>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

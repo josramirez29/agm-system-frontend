@@ -1,0 +1,49 @@
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy2);
+  margin-bottom: 20px;
+}
+
+.center { display: flex; justify-content: center; padding: 3rem; }
+.tab-content { padding: 1.5rem 0; }
+.table-wrapper { overflow-x: auto; }
+.full-width { width: 100%; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  color: var(--text-4);
+
+  mat-icon {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: .5rem;
+  }
+}
+
+.grade-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 12px;
+
+  &.pass { background: var(--green-bg);  color: var(--green-text); }
+  &.fail { background: var(--red-bg);    color: var(--red-text);   }
+}
+
+.pct-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &.ok   { background: var(--green-bg);  color: var(--green-text); }
+  &.warn { background: var(--amber-bg);  color: var(--amber-text); }
+}

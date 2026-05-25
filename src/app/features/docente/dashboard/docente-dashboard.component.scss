@@ -1,0 +1,42 @@
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy2);
+  margin-bottom: 20px;
+}
+
+.center { display: flex; justify-content: center; padding: 3rem; }
+.no-data { color: var(--text-4); text-align: center; padding: 2rem 0; }
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (max-width: 900px) { grid-template-columns: 1fr; }
+}
+
+.chart-card, .materias-card { border-radius: var(--radius-lg) !important; }
+.chart-card mat-card-content { padding: 1rem !important; }
+
+.materias-grid { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+.materia-chip {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: var(--blue-ghost);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: .65rem 1rem;
+  transition: background 0.15s;
+  cursor: pointer;
+
+  &:hover { background: var(--blue-pale); }
+
+  mat-icon { color: var(--blue); }
+  strong { display: block; font-size: 13px; color: var(--text); }
+  small  { color: var(--text-3); font-size: 11px; }
+}

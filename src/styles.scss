@@ -1,0 +1,160 @@
+@use '@angular/material' as mat;
+
+html {
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+:root {
+  --navy:       #021B33;
+  --navy2:      #042C53;
+  --blue-dark:  #0C447C;
+  --blue:       #185FA5;
+  --blue-mid:   #378ADD;
+  --blue-light: #85B7EB;
+  --blue-pale:  #B5D4F4;
+  --blue-ghost: #E6F1FB;
+  --surface:    #F0F6FD;
+  --white:      #FFFFFF;
+
+  --text:   #021B33;
+  --text-2: #2c4a6a;
+  --text-3: #5a7a9a;
+  --text-4: #8eacc5;
+  --border: #d0e4f5;
+  --border2:#bdd5ee;
+
+  --green:      #1D9E75;
+  --green-bg:   #E1F5EE;
+  --green-text: #085041;
+  --red:        #E24B4A;
+  --red-bg:     #FCEBEB;
+  --red-text:   #A32D2D;
+  --amber:      #EF9F27;
+  --amber-bg:   #FAEEDA;
+  --amber-text: #854F0B;
+
+  --radius:    10px;
+  --radius-lg: 14px;
+  --shadow:    0 1px 3px rgba(2,27,51,.07), 0 4px 12px rgba(2,27,51,.04);
+  --shadow-md: 0 4px 16px rgba(2,27,51,.10), 0 1px 4px rgba(2,27,51,.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { height: 100%; color-scheme: light; }
+
+body {
+  height: 100%;
+  margin: 0;
+  background-color: var(--surface);
+  color: var(--text);
+  font-family: 'DM Sans', 'Roboto', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Syne', 'DM Sans', sans-serif;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.mat-mdc-header-cell {
+  font-family: 'DM Sans', sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 11px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-3) !important;
+  background: var(--surface) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.mat-mdc-row:hover { background: #f5f9fe !important; }
+
+.mat-mdc-cell {
+  font-size: 13px !important;
+  color: var(--text-2) !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.mat-mdc-card {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.mat-mdc-card-header-text .mat-mdc-card-title {
+  font-family: 'Syne', sans-serif !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  color: var(--navy2) !important;
+}
+
+.mat-mdc-card-subtitle {
+  color: var(--text-3) !important;
+  font-size: 12px !important;
+}
+
+.mat-toolbar {
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+.snack-error .mdc-snackbar__surface { background: var(--red) !important; }
+
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-flat-button.mat-primary {
+  background-color: var(--blue) !important;
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+.mat-mdc-form-field {
+  font-family: 'DM Sans', sans-serif !important;
+}
+
+.mat-mdc-menu-item {
+  font-family: 'DM Sans', sans-serif !important;
+  font-size: 13px !important;
+}
+
+.mat-sidenav.sidenav,
+mat-sidenav.sidenav {
+  --mdc-list-list-item-label-text-color:         rgba(255, 255, 255, 0.65);
+  --mdc-list-list-item-label-text-font:          'DM Sans', sans-serif;
+  --mdc-list-list-item-label-text-size:          13px;
+  --mdc-list-list-item-leading-icon-color:       rgba(255, 255, 255, 0.45);
+  --mdc-list-list-item-hover-label-text-color:   #ffffff;
+  --mdc-list-list-item-hover-leading-icon-color: #ffffff;
+  --mdc-list-list-item-focus-label-text-color:   #ffffff;
+  --mdc-list-list-item-hover-state-layer-color:  transparent;
+  --mdc-list-list-item-hover-state-layer-opacity: 0;
+  --mdc-list-list-item-focus-state-layer-opacity: 0;
+  --mat-list-active-indicator-color:             transparent;
+  --mat-list-active-indicator-shape:             0;
+}
+
+.mat-sidenav.sidenav .active-link {
+  --mdc-list-list-item-label-text-color:   #ffffff;
+  --mdc-list-list-item-leading-icon-color: var(--blue-mid);
+}
+
+::-webkit-scrollbar          { width: 5px; height: 5px; }
+::-webkit-scrollbar-track    { background: transparent; }
+::-webkit-scrollbar-thumb    { background: var(--blue-pale); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-light); }
+
+@media (max-width: 768px) {
+  .mat-mdc-card-header-text .mat-mdc-card-title {
+    font-size: 13px !important;
+  }
+}

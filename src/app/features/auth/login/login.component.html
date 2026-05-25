@@ -1,0 +1,45 @@
+<div class="login-container">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <div class="brand">
+        <div class="brand-mark">AG<span>M</span></div>
+        <div class="brand-sub">Gestión Académica · BUAP FCC</div>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Correo electrónico</mat-label>
+          <input matInput formControlName="email" type="email" autocomplete="email" />
+          <mat-icon matSuffix>email</mat-icon>
+          @if (form.get('email')?.touched && emailError) {
+            <mat-error>{{ emailError }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Contraseña</mat-label>
+          <input matInput formControlName="password"
+                 [type]="hidePassword() ? 'password' : 'text'"
+                 autocomplete="current-password" />
+          <button mat-icon-button matSuffix type="button"
+                  (click)="hidePassword.set(!hidePassword())">
+            <mat-icon>{{ hidePassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.get('password')?.touched && passwordError) {
+            <mat-error>{{ passwordError }}</mat-error>
+          }
+        </mat-form-field>
+
+        <button mat-flat-button class="submit-btn" type="submit" [disabled]="loading()">
+          @if (loading()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            Iniciar sesión
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

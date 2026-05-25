@@ -1,0 +1,48 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav [mode]="isMobile() ? 'over' : 'side'" [opened]="!isMobile()" class="sidenav">
+
+    <div class="sb-logo">
+      <div class="logo-mark">AG<span>M</span></div>
+      <div class="buap-badge">BUAP</div>
+    </div>
+
+    <div class="sb-user">
+      <div class="avatar av-alumno">AL</div>
+      <div class="user-info">
+        <div class="user-name">{{ auth.currentUser()?.email }}</div>
+        <div class="user-role">Alumno</div>
+      </div>
+    </div>
+
+    <mat-nav-list>
+      @for (item of nav; track item.path) {
+        <a mat-list-item [routerLink]="item.path" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+          <span matListItemTitle>{{ item.label }}</span>
+        </a>
+      }
+    </mat-nav-list>
+
+    <div class="sidenav-footer">
+      <button class="logout-btn" (click)="auth.logout()">
+        <mat-icon>logout</mat-icon>
+        Cerrar sesión
+      </button>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    <mat-toolbar class="toolbar">
+      @if (isMobile()) {
+        <button mat-icon-button (click)="sidenav.toggle()"><mat-icon>menu</mat-icon></button>
+      }
+      <span class="toolbar-title">Portal Alumno</span>
+      <span class="spacer"></span>
+      <div class="tb-chip">
+        <mat-icon>person</mat-icon>
+        Alumno
+      </div>
+    </mat-toolbar>
+    <div class="page-content"><router-outlet /></div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

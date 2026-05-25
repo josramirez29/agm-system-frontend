@@ -1,0 +1,52 @@
+<div class="dashboard">
+  <h2 class="page-title">Dashboard Docente</h2>
+
+  @if (loading()) {
+    <div class="center"><mat-spinner /></div>
+  } @else {
+    <div class="charts-grid">
+      <mat-card class="chart-card">
+        <mat-card-header><mat-card-title>Asistencia por Materia (%)</mat-card-title></mat-card-header>
+        <mat-card-content>
+          @if (materias().length > 0) {
+            <canvas baseChart [data]="barData()" [options]="barOptions" type="bar"></canvas>
+          } @else {
+            <p class="no-data">No hay materias asignadas aún.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="chart-card">
+        <mat-card-header><mat-card-title>Distribución Global</mat-card-title></mat-card-header>
+        <mat-card-content>
+          @if (materias().length > 0) {
+            <canvas baseChart [data]="pieData()" [options]="pieOptions" type="doughnut"></canvas>
+          } @else {
+            <p class="no-data">Sin datos suficientes.</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <mat-card class="materias-card">
+      <mat-card-header><mat-card-title>Mis Materias</mat-card-title></mat-card-header>
+      <mat-card-content>
+        @if (materias().length === 0) {
+          <p class="no-data">No tienes materias asignadas.</p>
+        } @else {
+          <div class="materias-grid">
+            @for (m of materias(); track m.id) {
+              <div class="materia-chip">
+                <mat-icon>menu_book</mat-icon>
+                <div>
+                  <strong>{{ m.nombre }}</strong>
+                  <small>NRC: {{ m.nrc }} · {{ m.creditos }} créditos</small>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

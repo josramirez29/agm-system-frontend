@@ -1,0 +1,82 @@
+<div class="page">
+  <h2 class="page-title">Reportes</h2>
+
+  <!-- Descarga de reportes por materia -->
+  <mat-card class="filter-card">
+    <mat-card-header><mat-card-title>Descargar reporte por materia</mat-card-title></mat-card-header>
+    <mat-card-content>
+      <div class="filter-row">
+        <mat-form-field appearance="outline" class="select-field">
+          <mat-label>Materia</mat-label>
+          <mat-select [(ngModel)]="selectedMateria" (ngModelChange)="selectedMateria.set($event)">
+            @for (m of materias(); track m.id) {
+              <mat-option [value]="m.id">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="download-btns">
+          <button mat-stroked-button (click)="descargar('asistencias','pdf')" [disabled]="downloading()">
+            <mat-icon>picture_as_pdf</mat-icon> Asistencias PDF
+          </button>
+          <button mat-stroked-button (click)="descargar('asistencias','xls')" [disabled]="downloading()">
+            <mat-icon>table_chart</mat-icon> Asistencias Excel
+          </button>
+          <button mat-stroked-button color="primary" (click)="descargar('calificaciones','pdf')" [disabled]="downloading()">
+            <mat-icon>picture_as_pdf</mat-icon> Calificaciones PDF
+          </button>
+          <button mat-stroked-button color="primary" (click)="descargar('calificaciones','xls')" [disabled]="downloading()">
+            <mat-icon>table_chart</mat-icon> Calificaciones Excel
+          </button>
+          @if (downloading()) { <mat-spinner diameter="24" /> }
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Estadísticas registradas del docente -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>Mis estadísticas registradas</mat-card-title>
+      <mat-card-subtitle>Historial de cierres de materia procesados por el sistema</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      @if (loadingReporte()) {
+        <div class="center"><mat-spinner diameter="36" /></div>
+      } @else if (estadisticas().length === 0) {
+        <p class="no-data">No hay estadísticas registradas aún.</p>
+      } @else {
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" class="full-width">
+            <ng-container matColumnDef="materia_id">
+              <th mat-header-cell *matHeaderCellDef>Materia ID</th>
+              <td mat-cell *matCellDef="let r">{{ r.materia_id }}</td>
+            </ng-container>
+            <ng-container matColumnDef="periodo_nombre">
+              <th mat-header-cell *matHeaderCellDef>Periodo</th>
+              <td mat-cell *matCellDef="let r">{{ r.periodo_nombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="promedio_general">
+              <th mat-header-cell *matHeaderCellDef>Promedio calif.</th>
+              <td mat-cell *matCellDef="let r">{{ r.promedio_general | number:'1.1-1' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="porcentaje_asistencia">
+              <th mat-header-cell *matHeaderCellDef>% Asistencia</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="pct-badge" [class.ok]="r.porcentaje_asistencia >= 80" [class.warn]="r.porcentaje_asistencia < 80">
+                  {{ r.porcentaje_asistencia | number:'1.0-1' }}%
+                </span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="total_alumnos">
+              <th mat-header-cell *matHeaderCellDef>Alumnos</th>
+              <td mat-cell *matCellDef="let r">{{ r.total_alumnos }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+          </table>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

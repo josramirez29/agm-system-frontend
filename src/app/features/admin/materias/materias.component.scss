@@ -1,0 +1,29 @@
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy2);
+  margin: 0;
+}
+
+.search-field {
+  width: 100%;
+  max-width: 360px;
+  margin-bottom: .5rem;
+
+  @media (max-width: 600px) { max-width: 100%; }
+}
+
+.table-wrapper { overflow-x: auto; }
+.full-width { width: 100%; }
+.center { display: flex; justify-content: center; padding: 2rem; }
+.no-data { padding: 2rem; text-align: center; color: var(--text-4); }

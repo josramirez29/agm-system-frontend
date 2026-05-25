@@ -1,0 +1,48 @@
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy2);
+  margin-bottom: 20px;
+}
+
+.filter-card, .table-card {
+  border-radius: var(--radius-lg) !important;
+  margin-bottom: 16px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.select-field {
+  min-width: 240px;
+
+  @media (max-width: 600px) { min-width: 100%; width: 100%; }
+}
+
+.download-btns {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.table-wrapper { overflow-x: auto; }
+.full-width { width: 100%; }
+.center { display: flex; justify-content: center; padding: 2rem; }
+.no-data { padding: 2rem; text-align: center; color: var(--text-4); }
+
+.pct-badge {
+  display: inline-flex;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &.ok   { background: var(--green-bg);  color: var(--green-text); }
+  &.warn { background: var(--amber-bg);  color: var(--amber-text); }
+}

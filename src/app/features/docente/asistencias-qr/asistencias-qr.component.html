@@ -1,0 +1,94 @@
+<div class="page">
+  <h2 class="page-title">Asistencias QR</h2>
+
+  @if (!sesionActiva()) {
+    <!-- INICIAR SESIÓN -->
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>Iniciar sesión de asistencia</mat-card-title>
+        <mat-card-subtitle>Selecciona la materia y activa el escáner QR</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="form" (ngSubmit)="iniciarSesion()" class="session-form">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Materia</mat-label>
+            <mat-select formControlName="materia_id">
+              @for (m of materias(); track m.id) {
+                <mat-option [value]="m.id">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
+              }
+            </mat-select>
+            @if (form.get('materia_id')?.touched && form.get('materia_id')?.invalid) {
+              <mat-error>Selecciona una materia</mat-error>
+            }
+          </mat-form-field>
+          <button mat-flat-button color="primary" type="submit" [disabled]="loading()">
+            @if (loading()) { <mat-spinner diameter="20" /> } @else { <mat-icon>qr_code_scanner</mat-icon> Iniciar sesión }
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <!-- SESIÓN ACTIVA -->
+    <div class="session-grid">
+      <mat-card class="scanner-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon color="accent">fiber_manual_record</mat-icon>
+            Sesión activa — Escáner QR
+          </mat-card-title>
+          <mat-card-subtitle>Apunta la cámara al código QR del alumno</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (scanning()) {
+            <div class="scanner-wrapper">
+              <zxing-scanner
+                [enable]="scanning()"
+                (scanSuccess)="onQrScanned($event)"
+                [formats]="allowedFormats">
+              </zxing-scanner>
+            </div>
+            @if (lastScanned()) {
+              <div class="last-scan">
+                <mat-icon>check_circle</mat-icon> Último: {{ lastScanned() }}
+              </div>
+            }
+          }
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-flat-button color="warn" (click)="cerrarSesion()">
+            <mat-icon>stop_circle</mat-icon> Cerrar sesión
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <mat-card class="list-card">
+        <mat-card-header>
+          <mat-card-title>Asistencias registradas ({{ asistencias().length }})</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="table-wrapper">
+            <table mat-table [dataSource]="dataSource" class="full-width">
+              <ng-container matColumnDef="alumno_nombre">
+                <th mat-header-cell *matHeaderCellDef>Alumno</th>
+                <td mat-cell *matCellDef="let r">{{ r.alumno_nombre ?? r.alumno }}</td>
+              </ng-container>
+              <ng-container matColumnDef="alumno_matricula">
+                <th mat-header-cell *matHeaderCellDef>Matrícula</th>
+                <td mat-cell *matCellDef="let r">{{ r.alumno_matricula ?? '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="timestamp">
+                <th mat-header-cell *matHeaderCellDef>Hora</th>
+                <td mat-cell *matCellDef="let r">{{ r.timestamp | date:'HH:mm:ss' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+              <tr class="mat-row" *matNoDataRow>
+                <td class="mat-cell no-data" [attr.colspan]="3">Esperando alumnos…</td>
+              </tr>
+            </table>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

@@ -1,0 +1,62 @@
+<div class="page">
+  <div class="page-header">
+    <h2 class="page-title">Periodos Académicos</h2>
+    <button mat-flat-button color="primary" (click)="openForm()">
+      <mat-icon>add</mat-icon> Nuevo periodo
+    </button>
+  </div>
+
+  <mat-card>
+    <mat-card-content>
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar</mat-label>
+        <mat-icon matSuffix>search</mat-icon>
+        <input matInput (input)="applyFilter($event)" placeholder="Nombre, fecha…" />
+      </mat-form-field>
+
+      @if (loading()) {
+        <div class="center"><mat-spinner diameter="40" /></div>
+      } @else {
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" matSort class="full-width">
+            <ng-container matColumnDef="nombre">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+              <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="fecha_inicio">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Inicio</th>
+              <td mat-cell *matCellDef="let r">{{ r.fecha_inicio | date:'dd/MM/yyyy' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="fecha_fin">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Fin</th>
+              <td mat-cell *matCellDef="let r">{{ r.fecha_fin | date:'dd/MM/yyyy' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="activo">
+              <th mat-header-cell *matHeaderCellDef>Estado</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="badge" [class.active]="r.activo">{{ r.activo ? 'Activo' : 'Inactivo' }}</span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef>Acciones</th>
+              <td mat-cell *matCellDef="let r">
+                <button mat-icon-button color="primary" (click)="openForm(r)" matTooltip="Editar">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="delete(r)" matTooltip="Eliminar">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">Sin resultados</td>
+            </tr>
+          </table>
+        </div>
+        <mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons />
+      }
+    </mat-card-content>
+  </mat-card>
+</div>
