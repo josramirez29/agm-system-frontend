@@ -69,6 +69,12 @@ export class AuthService {
     return JSON.parse(atob(base64));
   }
 
+  // 👇 AQUÍ SE INTEGRA EL MÉTODO NUEVO 👇
+  resetPassword(token: string, newPassword: string) {
+    const body = { token, new_password: newPassword };
+    return this.http.post(`${environment.apiUrls.auth}/auth/reset-password`, body);
+  }
+
   private loadUser(): LoginResponse | null {
     try {
       const raw = localStorage.getItem('agm_user');
