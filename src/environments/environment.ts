@@ -1,11 +1,12 @@
 export const environment = {
   production: false,
   apiUrls: {
-    auth:        'http://localhost:8000',
-    periodos:    'http://localhost:8001',
-    docentes:    'http://localhost:8003',
-    asistencias: 'http://localhost:8005',
-    reportes:    'http://localhost:8007',
+    auth:        'https://agm-system-ms-production.up.railway.app/auth',
+    periodos:    'https://agm-system-ms-production.up.railway.app/periodos',
+    docentes:    'https://agm-system-ms-production.up.railway.app/docentes',
+    asistencias: 'https://agm-system-ms-production.up.railway.app/asistencias',
+    reportes:    'https://agm-system-ms-production.up.railway.app/reportes',
+    calificaciones: 'https://agm-system-ms-production.up.railway.app/calificaciones',
   },
   jwtKey: 'agm_token',
 };
