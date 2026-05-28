@@ -10,13 +10,15 @@ export interface JwtPayload {
 
 export interface Periodo {
   id: number; nombre: string; fecha_inicio: string;
-  fecha_fin: string; activo: boolean;
+  fecha_fin: string; plan_estudios?: string; activo: boolean;
 }
 
 export interface Materia {
-  id: number; nrc: string; nombre: string; creditos: number;
-  periodo: number; periodo_nombre?: string;
-  docente?: number; docente_nombre?: string;
+  id: number; nrc: string; nombre: string; creditos?: number | null;
+  seccion?: string; clave?: string;
+  periodo_id: number; periodo_nombre?: string;
+  docente_id?: number | null; docente_nombre?: string;
+  horario?: string; activo?: boolean;
 }
 
 export interface Docente {

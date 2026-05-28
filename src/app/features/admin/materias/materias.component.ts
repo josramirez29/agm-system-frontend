@@ -35,7 +35,7 @@ export class MateriasComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort)      sort!: MatSort;
 
-  displayedColumns = ['nrc', 'nombre', 'creditos', 'periodo_nombre', 'docente_nombre', 'acciones'];
+  displayedColumns = ['nrc', 'nombre', 'periodo_nombre', 'docente_nombre', 'acciones'];
   dataSource = new MatTableDataSource<Materia>([]);
   loading = signal(false);
 

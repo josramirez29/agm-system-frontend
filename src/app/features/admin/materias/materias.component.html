@@ -25,13 +25,9 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
               <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
             </ng-container>
-            <ng-container matColumnDef="creditos">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Créditos</th>
-              <td mat-cell *matCellDef="let r">{{ r.creditos }}</td>
-            </ng-container>
             <ng-container matColumnDef="periodo_nombre">
               <th mat-header-cell *matHeaderCellDef>Periodo</th>
-              <td mat-cell *matCellDef="let r">{{ r.periodo_nombre ?? r.periodo }}</td>
+              <td mat-cell *matCellDef="let r">{{ r.periodo_nombre ?? r.periodo_id }}</td>
             </ng-container>
             <ng-container matColumnDef="docente_nombre">
               <th mat-header-cell *matHeaderCellDef>Docente</th>
