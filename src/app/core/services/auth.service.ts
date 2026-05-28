@@ -39,6 +39,14 @@ export class AuthService {
   }
 
   logout() {
+    const token = this.getToken();
+    if (token) {
+      this.http.post(
+        `${environment.apiUrls.auth}/auth/logout`,
+        {},
+        { headers: new HttpHeaders({ Authorization: `Bearer ${token}` }) }
+      ).subscribe({ error: () => {} });
+    }
     localStorage.removeItem(environment.jwtKey);
     localStorage.removeItem('agm_user');
     this.currentUser.set(null);
@@ -77,6 +85,10 @@ export class AuthService {
 
   forgotPassword(email: string) {
     return this.http.post(`${environment.apiUrls.auth}/auth/forgot-password`, { email });
+  }
+
+  getCurrentUser() {
+    return this.currentUser();
   }
 
   private loadUser(): LoginResponse | null {

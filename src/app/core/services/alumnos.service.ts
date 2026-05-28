@@ -28,7 +28,22 @@ export class AlumnosService {
     return this.http.post<any>(`${this.base}/alumnos/importar/`, fd);
   }
 
+  importExcelPorNRC(file: File, nrc: string) {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post<any>(`${this.base}/alumnos/importar-excel/${nrc}`, fd);
+  }
+
   darDeBaja(id: number) {
     return this.http.delete(`${this.base}/alumnos/${id}/`);
+  }
+
+  getByEmail(email: string) {
+    return this.http.get<any>(`${this.base}/alumnos/`).pipe(
+      map((r: any) => {
+        const list: any[] = r.data?.results ?? r.results ?? r.data ?? r ?? [];
+        return Array.isArray(list) ? list.find((a: any) => a.email === email) ?? null : null;
+      })
+    );
   }
 }

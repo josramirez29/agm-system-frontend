@@ -56,4 +56,23 @@ export class ReportesService {
       map(r => r.data ?? r)
     );
   }
+
+  registrarEstadisticasMateria(datos: any) {
+    return this.http.post<any>(`${this.base}/estadisticas/registrar`, datos).pipe(
+      map(r => r.data ?? r)
+    );
+  }
+
+  registrarEstadisticasAlumno(datos: any) {
+    return this.http.post<any>(`${this.base}/estadisticas/alumno/registrar`, datos).pipe(
+      map(r => r.data ?? r)
+    );
+  }
+
+  compararEstadisticasPorMateria(materiaNombre: string) {
+    const params = new HttpParams().set('materia_nombre', materiaNombre);
+    return this.http.get<any>(`${this.base}/estadisticas/comparar`, { params }).pipe(
+      map(r => r.data ?? r)
+    );
+  }
 }
