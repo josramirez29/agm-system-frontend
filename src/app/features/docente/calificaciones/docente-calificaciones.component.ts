@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormArray, Validators, FormGroup } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -68,6 +68,7 @@ export class DocenteCalificacionesComponent implements OnInit {
   actividades      = signal<Actividad[]>([]);
   concentrado      = signal<ConcentradoRow[]>([]);
   sumaPonderacion  = signal(0);
+  materiaActiva    = computed(() => this.selectedMateria()?.activo !== false);
 
   formPonderaciones!: FormGroup;
   formCalif = this.fb.group({

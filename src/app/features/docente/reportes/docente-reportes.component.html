@@ -8,7 +8,7 @@
       <div class="filter-row">
         <mat-form-field appearance="outline" class="select-field">
           <mat-label>Materia</mat-label>
-          <mat-select [(ngModel)]="selectedMateria" (ngModelChange)="selectedMateria.set($event)">
+          <mat-select [ngModel]="selectedMateria()" (ngModelChange)="selectedMateria.set($event)">
             @for (m of materias(); track m.nrc) {
               <mat-option [value]="m.nrc">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
             }

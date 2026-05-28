@@ -26,7 +26,17 @@
     </mat-card>
 
     @if (selectedMateria()) {
-      @if (loadingPond()) {
+      @if (!materiaActiva()) {
+        <mat-card class="empty-card" style="border-left: 4px solid #e53935;">
+          <mat-card-content style="display:flex;align-items:center;gap:12px;padding:16px">
+            <mat-icon style="color:#e53935;font-size:32px;width:32px;height:32px">lock</mat-icon>
+            <div>
+              <strong>Materia cerrada</strong>
+              <p style="margin:4px 0 0">Esta materia fue cerrada. No se pueden agregar ni modificar ponderaciones ni calificaciones.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      } @else if (loadingPond()) {
         <div class="center"><mat-spinner /></div>
       } @else if (actividades().length === 0 || reconfigurandoPond()) {
         <!-- Sin ponderaciones o reconfiguración: formulario -->
