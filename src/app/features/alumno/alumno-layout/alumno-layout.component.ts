@@ -24,6 +24,7 @@ export class AlumnoLayoutComponent {
   nav = [
     { label: 'Mi QR de Asistencia', icon: 'qr_code_2',   path: 'asistencia'     },
     { label: 'Calificaciones',       icon: 'grade',        path: 'calificaciones' },
+    { label: 'Mis Estadísticas',     icon: 'assessment',   path: 'reportes'       },
   ];
   private bp = inject(BreakpointObserver);
   isMobile = toSignal(this.bp.observe(Breakpoints.Handset).pipe(map(r => r.matches)), { initialValue: false });

@@ -1,0 +1,295 @@
+.reportes-alumno-container {
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  h1 {
+    margin-bottom: 8px;
+    color: #1565c0;
+    font-size: 32px;
+    font-weight: 500;
+  }
+
+  .subtitle {
+    margin-bottom: 24px;
+    color: #666;
+    font-size: 14px;
+  }
+}
+
+.tab-content {
+  padding: 24px;
+}
+
+.info-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  color: #666;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #999;
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+.estadisticas-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stats-card {
+  border-left: 4px solid #1565c0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  mat-card-header {
+    margin-bottom: 20px;
+  }
+
+  .materia-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+
+    div {
+      flex: 1;
+    }
+
+    .fecha-chip {
+      align-self: center;
+      background-color: #f5f5f5 !important;
+      font-size: 11px;
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    .stat-label {
+      font-weight: 600;
+      color: #333;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      mat-progress-bar {
+        height: 12px;
+        border-radius: 6px;
+
+        &.high {
+          --mdc-theme-primary: #4caf50;
+        }
+
+        &.medium {
+          --mdc-theme-primary: #ff9800;
+        }
+
+        &.low {
+          --mdc-theme-primary: #f44336;
+        }
+      }
+
+      .stat-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .percentage {
+          font-size: 16px;
+          font-weight: 700;
+          color: #333;
+        }
+
+        .status {
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.3px;
+
+          &.status-high {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+          }
+
+          &.status-medium {
+            background-color: #ffe0b2;
+            color: #e65100;
+          }
+
+          &.status-low {
+            background-color: #ffcdd2;
+            color: #c62828;
+          }
+        }
+      }
+    }
+
+    .detail-text {
+      font-size: 12px;
+      color: #999;
+    }
+  }
+}
+
+// Summary Card
+.summary-card {
+  margin-bottom: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  .summary-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+  }
+
+  .summary-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #1565c0;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #1565c0;
+    }
+
+    .info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .label {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      .value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+      }
+    }
+  }
+}
+
+// Info Card
+.info-card {
+  ul {
+    margin: 12px 0 0 0;
+    padding-left: 24px;
+
+    li {
+      margin: 8px 0;
+      line-height: 1.6;
+      color: #555;
+      font-size: 14px;
+
+      strong {
+        color: #333;
+      }
+    }
+  }
+}
+
+// Paginator
+::ng-deep .mat-mdc-paginator {
+  background-color: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 20px;
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .reportes-alumno-container {
+    padding: 12px;
+
+    h1 {
+      font-size: 24px;
+    }
+
+    .subtitle {
+      font-size: 12px;
+    }
+  }
+
+  .tab-content {
+    padding: 12px;
+  }
+
+  .stats-card .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card .summary-content {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-card .materia-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stats-card .fecha-chip {
+    align-self: flex-start !important;
+  }
+}

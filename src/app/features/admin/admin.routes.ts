@@ -12,6 +12,7 @@ export const adminRoutes: Routes = [
       { path: 'materias',  loadComponent: () => import('./materias/materias.component').then(m => m.MateriasComponent) },
       { path: 'docentes',  loadComponent: () => import('./docentes/docentes.component').then(m => m.DocentesComponent) },
       { path: 'alumnos',   loadComponent: () => import('./alumnos/alumnos.component').then(m => m.AlumnosComponent) },
+      { path: 'reportes',  loadComponent: () => import('./reportes/reportes.component').then(m => m.ReportesComponent) },
     ]
   }
 ];

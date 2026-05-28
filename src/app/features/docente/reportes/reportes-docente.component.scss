@@ -1,0 +1,211 @@
+.reportes-docente-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  h1 {
+    margin-bottom: 24px;
+    color: #1565c0;
+    font-size: 32px;
+    font-weight: 500;
+  }
+}
+
+.tab-content {
+  padding: 24px;
+}
+
+.info-card {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  gap: 16px;
+  color: #666;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  color: #999;
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+  }
+
+  p {
+    margin: 0;
+    font-size: 16px;
+  }
+}
+
+.materias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.materia-card {
+  border-left: 4px solid #1565c0;
+  transition: transform 0.3s, box-shadow 0.3s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(21, 101, 192, 0.15);
+  }
+
+  mat-card-header {
+    margin-bottom: 16px;
+  }
+
+  .button-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 8px 12px !important;
+      height: auto;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+}
+
+.table-responsive {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+}
+
+.estadisticas-table {
+  width: 100%;
+  background: white;
+
+  th {
+    background-color: #f5f5f5;
+    font-weight: 600;
+    color: #333;
+    padding: 16px;
+    border-bottom: 2px solid #e0e0e0;
+    text-align: left;
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  tr:hover {
+    background-color: #fafafa;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.progress-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  mat-progress-bar {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+
+    &.high {
+      --mdc-theme-primary: #4caf50;
+    }
+
+    &.medium {
+      --mdc-theme-primary: #ff9800;
+    }
+
+    &.low {
+      --mdc-theme-primary: #f44336;
+    }
+  }
+
+  span {
+    min-width: 45px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 12px;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .reportes-docente-container {
+    padding: 12px;
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+  }
+
+  .tab-content {
+    padding: 12px;
+  }
+
+  .materias-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .materia-card .button-group {
+    grid-template-columns: 1fr;
+  }
+
+  .table-responsive {
+    font-size: 12px;
+  }
+
+  .estadisticas-table th,
+  .estadisticas-table td {
+    padding: 8px 12px;
+  }
+}

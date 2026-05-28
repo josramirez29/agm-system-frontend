@@ -1,0 +1,608 @@
+<div class="reportes-container">
+  <h1>Gestión de Reportes y Estadísticas</h1>
+
+  <mat-tab-group>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 1: Historial de Reportes
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Historial de Reportes">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Reportes Generados</mat-card-title>
+            <mat-card-subtitle>Historial completo de todos los reportes generados en el sistema</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+
+            <div *ngIf="loadingHistorial()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando historial...</p>
+            </div>
+
+            <div *ngIf="!loadingHistorial() && historialReportes().length === 0" class="empty-state">
+              <mat-icon>description</mat-icon>
+              <p>No hay reportes generados aún</p>
+            </div>
+
+            <div *ngIf="!loadingHistorial() && historialReportes().length > 0">
+              <div class="table-responsive">
+                <table mat-table [dataSource]="historialReportes()" class="reportes-table">
+
+                  <ng-container matColumnDef="id">
+                    <th mat-header-cell *matHeaderCellDef>ID</th>
+                    <td mat-cell *matCellDef="let r">{{ r.id }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="materia_id">
+                    <th mat-header-cell *matHeaderCellDef>Materia ID</th>
+                    <td mat-cell *matCellDef="let r">{{ r.materia_id }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="docente_id">
+                    <th mat-header-cell *matHeaderCellDef>Docente ID</th>
+                    <td mat-cell *matCellDef="let r">{{ r.docente_id ?? '—' }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="tipo">
+                    <th mat-header-cell *matHeaderCellDef>Tipo</th>
+                    <td mat-cell *matCellDef="let r">
+                      <span [class]="'tipo-badge tipo-' + r.tipo">{{ r.tipo | uppercase }}</span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="formato">
+                    <th mat-header-cell *matHeaderCellDef>Formato</th>
+                    <td mat-cell *matCellDef="let r">
+                      <span [class]="r.formato === 'pdf' ? 'pdf-badge' : 'xls-badge'">
+                        {{ r.formato | uppercase }}
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fecha_generado">
+                    <th mat-header-cell *matHeaderCellDef>Fecha Generado</th>
+                    <td mat-cell *matCellDef="let r">{{ r.fecha_generado | date:'dd/MM/yyyy HH:mm' }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="columnasHistorial"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columnasHistorial;"></tr>
+                </table>
+              </div>
+
+              <mat-paginator
+                [length]="totalHistorial()"
+                [pageSize]="limiteHistorial()"
+                [pageSizeOptions]="[5, 10, 25]"
+                (page)="onPaginaHistorialChange($event)">
+              </mat-paginator>
+            </div>
+
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 2: Generar Reportes
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Generar Reportes">
+      <div class="tab-content">
+        <div class="two-col-layout">
+
+          <!-- Formulario -->
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>Generar Nuevo Reporte</mat-card-title>
+              <mat-card-subtitle>Selecciona la materia, tipo y formato</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="formGenerarReporte" (ngSubmit)="generarReporte()">
+                <mat-form-field appearance="outline">
+                  <mat-label>Materia</mat-label>
+                  <mat-select formControlName="materia_id">
+                    <mat-option *ngFor="let m of materiasPeriodos()" [value]="m.materia_id">
+                      {{ m.materia_nombre }} — NRC: {{ m.nrc }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="formGenerarReporte.get('materia_id')?.hasError('required')">
+                    Selecciona una materia
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Tipo de Reporte</mat-label>
+                  <mat-select formControlName="tipo">
+                    <mat-option value="calificaciones">Calificaciones</mat-option>
+                    <mat-option value="asistencias">Asistencias</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Formato</mat-label>
+                  <mat-select formControlName="formato">
+                    <mat-option value="pdf">PDF</mat-option>
+                    <mat-option value="xls">Excel (XLSX)</mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <button mat-raised-button color="primary" type="submit"
+                  [disabled]="formGenerarReporte.invalid || loadingMaterias() || generandoReporte()">
+                  <mat-spinner *ngIf="generandoReporte()" diameter="18" class="btn-spinner"></mat-spinner>
+                  <mat-icon *ngIf="!generandoReporte()">download</mat-icon>
+                  {{ generandoReporte() ? 'Generando...' : 'Generar y Descargar' }}
+                </button>
+              </form>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Historial académico de materias -->
+          <mat-card class="info-card">
+            <mat-card-header>
+              <mat-card-title>Historial Académico de Materias</mat-card-title>
+              <mat-card-subtitle>Periodos en que se ha impartido cada materia</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+
+              <div *ngIf="loadingMaterias()" class="loading">
+                <mat-spinner diameter="40"></mat-spinner>
+                <p>Cargando materias...</p>
+              </div>
+
+              <div *ngIf="!loadingMaterias() && materiasPeriodos().length === 0" class="empty-state">
+                <mat-icon>school</mat-icon>
+                <p>No hay materias disponibles</p>
+              </div>
+
+              <div *ngIf="!loadingMaterias()" class="materias-grid">
+                <mat-card *ngFor="let materia of materiasPeriodos()" class="materia-card">
+                  <mat-card-header>
+                    <mat-card-title>{{ materia.materia_nombre }}</mat-card-title>
+                    <mat-card-subtitle>NRC: {{ materia.nrc }}</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+
+                    <div class="periodos-info">
+                      <span class="badge" [class.badge-multiple]="tieneComparativa(materia)">
+                        {{ periodosMasImpartidos(materia) }}
+                      </span>
+                    </div>
+
+                    <div class="periodos-list" *ngIf="materia.periodos.length > 0">
+                      <div *ngFor="let periodo of materia.periodos" class="periodo-item">
+                        <mat-icon [class.activo]="estaActivo(periodo)" [class.inactivo]="!estaActivo(periodo)">
+                          {{ estaActivo(periodo) ? 'radio_button_checked' : 'radio_button_unchecked' }}
+                        </mat-icon>
+                        <div class="periodo-details">
+                          <strong>{{ periodo.nombre }}</strong>
+                          <small *ngIf="periodo.fecha_inicio">
+                            {{ periodo.fecha_inicio | date:'dd/MM/yy' }} – {{ periodo.fecha_fin | date:'dd/MM/yy' }}
+                          </small>
+                          <span class="estado-chip" [class.activo-chip]="estaActivo(periodo)" [class.inactivo-chip]="!estaActivo(periodo)">
+                            {{ estaActivo(periodo) ? 'Activo' : 'Inactivo' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="materia.periodos.length === 0" class="no-periodos">
+                      <mat-icon>info</mat-icon> Sin periodos asociados
+                    </div>
+
+                  </mat-card-content>
+                </mat-card>
+              </div>
+
+            </mat-card-content>
+          </mat-card>
+
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 3: Estadísticas de Materias
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Estadísticas de Materias">
+      <div class="tab-content">
+
+        <!-- Selector de docente -->
+        <mat-card class="selector-card">
+          <mat-card-header>
+            <mat-card-title>Consultar Estadísticas por Docente</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="docente-select">
+              <mat-label>Selecciona un Docente</mat-label>
+              <mat-select [value]="selectedDocenteId()" (selectionChange)="seleccionarDocente($event.value)">
+                <mat-option *ngFor="let d of docentesList()" [value]="d.id">
+                  {{ d.nombre }} {{ d.apellido }} — {{ d.email }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="two-col-layout">
+
+          <!-- Formulario registro -->
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>Registrar Estadística de Materia</mat-card-title>
+              <mat-card-subtitle>Solo disponible para Administrador</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="formRegistrarEstadisticas" (ngSubmit)="registrarEstadisticasMateria()">
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Materia ID</mat-label>
+                    <input matInput formControlName="materia_id" />
+                    <mat-error *ngIf="formRegistrarEstadisticas.get('materia_id')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nombre de Materia</mat-label>
+                    <input matInput formControlName="materia_nombre" />
+                    <mat-error *ngIf="formRegistrarEstadisticas.get('materia_nombre')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>NRC de la Materia</mat-label>
+                    <input matInput formControlName="materia_nrc" />
+                    <mat-error *ngIf="formRegistrarEstadisticas.get('materia_nrc')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nombre del Periodo</mat-label>
+                    <input matInput formControlName="periodo_nombre" />
+                    <mat-error *ngIf="formRegistrarEstadisticas.get('periodo_nombre')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Docente ID</mat-label>
+                  <input matInput formControlName="docente_id" />
+                  <mat-error *ngIf="formRegistrarEstadisticas.get('docente_id')?.hasError('required')">Requerido</mat-error>
+                </mat-form-field>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Total de Alumnos</mat-label>
+                    <input matInput type="number" formControlName="total_alumnos" min="1" />
+                    <mat-error>Debe ser mayor a 0</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Promedio General (0–100)</mat-label>
+                    <input matInput type="number" formControlName="promedio_general" min="0" max="100" step="0.1" />
+                    <mat-error>Debe estar entre 0 y 100</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>% Aprobados (0–100)</mat-label>
+                    <input matInput type="number" formControlName="porcentaje_aprobados" min="0" max="100" step="0.1" />
+                    <mat-error>Debe estar entre 0 y 100</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <button mat-raised-button color="primary" type="submit"
+                  [disabled]="formRegistrarEstadisticas.invalid">
+                  <mat-icon>save</mat-icon> Registrar Estadística
+                </button>
+              </form>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Tabla de estadísticas -->
+          <mat-card class="info-card">
+            <mat-card-header>
+              <mat-card-title>Estadísticas Registradas</mat-card-title>
+              <mat-card-subtitle *ngIf="selectedDocenteId()">
+                Mostrando estadísticas del docente seleccionado
+              </mat-card-subtitle>
+              <mat-card-subtitle *ngIf="!selectedDocenteId()">
+                Selecciona un docente para ver sus estadísticas
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+
+              <div *ngIf="!selectedDocenteId()" class="empty-state">
+                <mat-icon>person_search</mat-icon>
+                <p>Selecciona un docente arriba para ver sus estadísticas</p>
+              </div>
+
+              <div *ngIf="selectedDocenteId() && loadingEstadisticas()" class="loading">
+                <mat-spinner diameter="40"></mat-spinner>
+                <p>Cargando estadísticas...</p>
+              </div>
+
+              <div *ngIf="selectedDocenteId() && !loadingEstadisticas() && estadisticas().length === 0" class="empty-state">
+                <mat-icon>assessment</mat-icon>
+                <p>No hay estadísticas registradas para este docente</p>
+              </div>
+
+              <div *ngIf="selectedDocenteId() && !loadingEstadisticas() && estadisticas().length > 0">
+                <div class="table-responsive">
+                  <table mat-table [dataSource]="estadisticas()" class="estadisticas-table">
+
+                    <ng-container matColumnDef="materia_nombre">
+                      <th mat-header-cell *matHeaderCellDef>Materia</th>
+                      <td mat-cell *matCellDef="let e">{{ e.materia_nombre }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="materia_nrc">
+                      <th mat-header-cell *matHeaderCellDef>NRC</th>
+                      <td mat-cell *matCellDef="let e">{{ e.materia_nrc }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="periodo_nombre">
+                      <th mat-header-cell *matHeaderCellDef>Periodo</th>
+                      <td mat-cell *matCellDef="let e">{{ e.periodo_nombre }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="total_alumnos">
+                      <th mat-header-cell *matHeaderCellDef>Alumnos</th>
+                      <td mat-cell *matCellDef="let e">{{ e.total_alumnos }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="promedio_general">
+                      <th mat-header-cell *matHeaderCellDef>Promedio</th>
+                      <td mat-cell *matCellDef="let e">
+                        <div class="progress-inline">
+                          <mat-progress-bar mode="determinate" [value]="e.promedio_general"
+                            [ngClass]="e.promedio_general >= 80 ? 'high' : e.promedio_general >= 60 ? 'medium' : 'low'">
+                          </mat-progress-bar>
+                          <span>{{ e.promedio_general.toFixed(1) }}%</span>
+                        </div>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="porcentaje_aprobados">
+                      <th mat-header-cell *matHeaderCellDef>% Aprobados</th>
+                      <td mat-cell *matCellDef="let e">
+                        <div class="progress-inline">
+                          <mat-progress-bar mode="determinate" [value]="e.porcentaje_aprobados"
+                            [ngClass]="e.porcentaje_aprobados >= 80 ? 'high' : e.porcentaje_aprobados >= 60 ? 'medium' : 'low'">
+                          </mat-progress-bar>
+                          <span>{{ e.porcentaje_aprobados.toFixed(1) }}%</span>
+                        </div>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="fecha_registro">
+                      <th mat-header-cell *matHeaderCellDef>Fecha Registro</th>
+                      <td mat-cell *matCellDef="let e">{{ e.fecha_registro | date:'dd/MM/yyyy' }}</td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="columnasEstadisticas"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasEstadisticas;"></tr>
+                  </table>
+                </div>
+
+                <mat-paginator
+                  [length]="totalEstadisticas()"
+                  [pageSize]="limiteEstadisticas()"
+                  [pageSizeOptions]="[5, 10, 25]"
+                  (page)="onPaginaEstadisticasChange($event)">
+                </mat-paginator>
+              </div>
+
+            </mat-card-content>
+          </mat-card>
+
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 4: Estadísticas de Alumnos
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Estadísticas de Alumnos">
+      <div class="tab-content">
+
+        <!-- Buscador de alumno -->
+        <mat-card class="selector-card">
+          <mat-card-header>
+            <mat-card-title>Consultar Estadísticas de Alumno</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="search-row">
+              <mat-form-field appearance="outline" class="search-field">
+                <mat-label>ID del Alumno</mat-label>
+                <input matInput #alumnoIdInput placeholder="Ej: 12345" />
+                <mat-icon matSuffix>person</mat-icon>
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="buscarEstadisticasAlumno(alumnoIdInput.value)">
+                <mat-icon>search</mat-icon> Buscar
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="two-col-layout">
+
+          <!-- Formulario registro alumno -->
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>Registrar Estadística de Alumno</mat-card-title>
+              <mat-card-subtitle>Solo disponible para Administrador</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="formRegistrarEstadisticasAlumno" (ngSubmit)="registrarEstadisticasAlumno()">
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Alumno ID</mat-label>
+                    <input matInput formControlName="alumno_id" />
+                    <mat-error *ngIf="formRegistrarEstadisticasAlumno.get('alumno_id')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Materia ID</mat-label>
+                    <input matInput formControlName="materia_id" />
+                    <mat-error *ngIf="formRegistrarEstadisticasAlumno.get('materia_id')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Nombre de Materia</mat-label>
+                    <input matInput formControlName="materia_nombre" />
+                    <mat-error *ngIf="formRegistrarEstadisticasAlumno.get('materia_nombre')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>NRC de la Materia</mat-label>
+                    <input matInput formControlName="materia_nrc" />
+                    <mat-error *ngIf="formRegistrarEstadisticasAlumno.get('materia_nrc')?.hasError('required')">Requerido</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Nombre del Periodo</mat-label>
+                  <input matInput formControlName="periodo_nombre" />
+                  <mat-error *ngIf="formRegistrarEstadisticasAlumno.get('periodo_nombre')?.hasError('required')">Requerido</mat-error>
+                </mat-form-field>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>% Asistencia (0–100)</mat-label>
+                    <input matInput type="number" formControlName="porcentaje_asistencia" min="0" max="100" step="0.1" />
+                    <mat-error>Debe estar entre 0 y 100</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Promedio Calificaciones (0–100)</mat-label>
+                    <input matInput type="number" formControlName="promedio_calificaciones" min="0" max="100" step="0.1" />
+                    <mat-error>Debe estar entre 0 y 100</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Total de Sesiones</mat-label>
+                    <input matInput type="number" formControlName="total_sesiones" min="1" />
+                    <mat-error>Debe ser mayor a 0</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>Sesiones Presentes</mat-label>
+                    <input matInput type="number" formControlName="sesiones_presentes" min="0" />
+                    <mat-error>Debe ser 0 o más</mat-error>
+                  </mat-form-field>
+                </div>
+
+                <button mat-raised-button color="accent" type="submit"
+                  [disabled]="formRegistrarEstadisticasAlumno.invalid">
+                  <mat-icon>save</mat-icon> Registrar Estadística de Alumno
+                </button>
+              </form>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Tabla estadísticas de alumno -->
+          <mat-card class="info-card">
+            <mat-card-header>
+              <mat-card-title>Resultados</mat-card-title>
+              <mat-card-subtitle *ngIf="queryAlumnoId()">
+                Estadísticas del alumno ID: {{ queryAlumnoId() }}
+              </mat-card-subtitle>
+              <mat-card-subtitle *ngIf="!queryAlumnoId()">
+                Ingresa un ID de alumno y haz clic en Buscar
+              </mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+
+              <div *ngIf="!queryAlumnoId()" class="empty-state">
+                <mat-icon>manage_search</mat-icon>
+                <p>Busca las estadísticas de un alumno por su ID</p>
+              </div>
+
+              <div *ngIf="queryAlumnoId() && loadingEstadisticasAlumno()" class="loading">
+                <mat-spinner diameter="40"></mat-spinner>
+                <p>Cargando estadísticas del alumno...</p>
+              </div>
+
+              <div *ngIf="queryAlumnoId() && !loadingEstadisticasAlumno() && estadisticasAlumno().length === 0" class="empty-state">
+                <mat-icon>inbox</mat-icon>
+                <p>No se encontraron estadísticas para este alumno</p>
+              </div>
+
+              <div *ngIf="queryAlumnoId() && !loadingEstadisticasAlumno() && estadisticasAlumno().length > 0">
+                <div class="table-responsive">
+                  <table mat-table [dataSource]="estadisticasAlumno()" class="estadisticas-table">
+
+                    <ng-container matColumnDef="alumno_id">
+                      <th mat-header-cell *matHeaderCellDef>Alumno ID</th>
+                      <td mat-cell *matCellDef="let e">{{ e.alumno_id }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="materia_nombre">
+                      <th mat-header-cell *matHeaderCellDef>Materia</th>
+                      <td mat-cell *matCellDef="let e">{{ e.materia_nombre }}<br><small>{{ e.materia_nrc }}</small></td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="periodo_nombre">
+                      <th mat-header-cell *matHeaderCellDef>Periodo</th>
+                      <td mat-cell *matCellDef="let e">{{ e.periodo_nombre }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="porcentaje_asistencia">
+                      <th mat-header-cell *matHeaderCellDef>Asistencia</th>
+                      <td mat-cell *matCellDef="let e">
+                        <div class="progress-inline">
+                          <mat-progress-bar mode="determinate" [value]="e.porcentaje_asistencia"
+                            [ngClass]="e.porcentaje_asistencia >= 80 ? 'high' : e.porcentaje_asistencia >= 60 ? 'medium' : 'low'">
+                          </mat-progress-bar>
+                          <span>{{ e.porcentaje_asistencia.toFixed(1) }}%</span>
+                        </div>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="promedio_calificaciones">
+                      <th mat-header-cell *matHeaderCellDef>Promedio</th>
+                      <td mat-cell *matCellDef="let e">
+                        <div class="progress-inline">
+                          <mat-progress-bar mode="determinate" [value]="e.promedio_calificaciones"
+                            [ngClass]="e.promedio_calificaciones >= 80 ? 'high' : e.promedio_calificaciones >= 60 ? 'medium' : 'low'">
+                          </mat-progress-bar>
+                          <span>{{ e.promedio_calificaciones.toFixed(1) }}</span>
+                        </div>
+                      </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="sesiones_presentes">
+                      <th mat-header-cell *matHeaderCellDef>Sesiones</th>
+                      <td mat-cell *matCellDef="let e">{{ e.sesiones_presentes }} / {{ e.total_sesiones }}</td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="fecha_registro">
+                      <th mat-header-cell *matHeaderCellDef>Fecha Registro</th>
+                      <td mat-cell *matCellDef="let e">{{ e.fecha_registro | date:'dd/MM/yyyy' }}</td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="columnasEstadisticasAlumno"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnasEstadisticasAlumno;"></tr>
+                  </table>
+                </div>
+
+                <mat-paginator
+                  [length]="totalEstadisticasAlumno()"
+                  [pageSize]="limiteEstadisticasAlumno()"
+                  [pageSizeOptions]="[5, 10, 25]"
+                  (page)="onPaginaEstadisticasAlumnoChange($event)">
+                </mat-paginator>
+              </div>
+
+            </mat-card-content>
+          </mat-card>
+
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

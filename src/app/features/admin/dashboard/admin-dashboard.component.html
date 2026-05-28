@@ -1,9 +1,69 @@
 <div class="dashboard">
-  <h2 class="page-title">Dashboard</h2>
+  <h2 class="page-title">Dashboard Administrativo</h2>
 
   @if (loading()) {
     <div class="center"><mat-spinner /></div>
   } @else {
+    <!-- Fecha y Hora del Sistema -->
+    <mat-card class="system-info-card">
+      <mat-card-content>
+        <div class="system-info">
+          <div class="info-section">
+            <mat-icon>schedule</mat-icon>
+            <div class="info-text">
+              <span class="label">Fecha y Hora del Sistema</span>
+              <span class="value">{{ fechaSistema() }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Período Activo -->
+    @if (periodoActivo()) {
+      <mat-card class="periodo-card">
+        <mat-card-header>
+          <mat-card-title>Período Activo</mat-card-title>
+          <mat-chip class="status-chip" highlighted>
+            <mat-icon>check_circle</mat-icon>
+            ACTIVO
+          </mat-chip>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="periodo-details">
+            <div class="detail-item">
+              <strong>Período:</strong>
+              <span>{{ periodoActivo()?.nombre }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Desde:</strong>
+              <span>{{ periodoActivo()?.fecha_inicio | date: 'DD/MM/YYYY' }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Hasta:</strong>
+              <span>{{ periodoActivo()?.fecha_fin | date: 'DD/MM/YYYY' }}</span>
+            </div>
+            <div class="detail-item">
+              <strong>Días Restantes:</strong>
+              <span class="badge" [class.vigente]="estaVigente(obtenerDiasRestantes(periodoActivo()?.fecha_fin || ''))">
+                {{ obtenerDiasRestantes(periodoActivo()?.fecha_fin || '') }} días
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    } @else {
+      <mat-card class="periodo-card empty">
+        <mat-card-content>
+          <div class="empty-state">
+            <mat-icon>event_note</mat-icon>
+            <p>No hay período activo en este momento</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Estadísticas Generales -->
     <div class="stats-grid">
       @for (s of stats(); track s.label) {
         <mat-card class="stat-card">
@@ -22,12 +82,52 @@
       }
     </div>
 
+    <!-- Acceso Rápido a Funciones -->
+    <mat-card class="quick-access-card">
+      <mat-card-header>
+        <mat-card-title>Acceso Rápido</mat-card-title>
+        <mat-card-subtitle>Gestiona los principales módulos del sistema</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="quick-access-buttons">
+          <button mat-raised-button color="primary" routerLink="../periodos">
+            <mat-icon>date_range</mat-icon>
+            Gestionar Períodos
+          </button>
+          <button mat-raised-button color="primary" routerLink="../materias">
+            <mat-icon>menu_book</mat-icon>
+            Gestionar Materias
+          </button>
+          <button mat-raised-button color="primary" routerLink="../docentes">
+            <mat-icon>person_pin</mat-icon>
+            Gestionar Docentes
+          </button>
+          <button mat-raised-button color="primary" routerLink="../alumnos">
+            <mat-icon>groups</mat-icon>
+            Gestionar Alumnos
+          </button>
+          <button mat-raised-button color="accent" routerLink="../reportes">
+            <mat-icon>description</mat-icon>
+            Ver Reportes
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Información del Sistema -->
     <mat-card class="info-card">
       <mat-card-header>
         <mat-card-title>Bienvenido al Panel de Administración</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <p>Usa el menú lateral para gestionar periodos, materias, docentes y alumnos del sistema AGM.</p>
+        <p>Este panel te permite gestionar todos los aspectos del sistema AGM:</p>
+        <ul>
+          <li><strong>Períodos:</strong> Define los períodos académicos del sistema</li>
+          <li><strong>Materias:</strong> Crea y asigna materias a períodos específicos</li>
+          <li><strong>Docentes:</strong> Administra el registro de docentes del sistema</li>
+          <li><strong>Alumnos:</strong> Gestiona los datos de alumnos inscritos</li>
+          <li><strong>Reportes:</strong> Genera reportes de calificaciones, asistencias y estadísticas</li>
+        </ul>
       </mat-card-content>
     </mat-card>
   }

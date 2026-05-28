@@ -1,82 +1,285 @@
-<div class="page">
-  <h2 class="page-title">Reportes</h2>
+<div class="reportes-docente-container">
+  <h1>Reportes y Estadísticas</h1>
 
-  <!-- Descarga de reportes por materia -->
-  <mat-card class="filter-card">
-    <mat-card-header><mat-card-title>Descargar reporte por materia</mat-card-title></mat-card-header>
-    <mat-card-content>
-      <div class="filter-row">
-        <mat-form-field appearance="outline" class="select-field">
-          <mat-label>Materia</mat-label>
-          <mat-select [(ngModel)]="selectedMateria" (ngModelChange)="selectedMateria.set($event)">
-            @for (m of materias(); track m.id) {
-              <mat-option [value]="m.id">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
+  <mat-tab-group>
 
-        <div class="download-btns">
-          <button mat-stroked-button (click)="descargar('asistencias','pdf')" [disabled]="downloading()">
-            <mat-icon>picture_as_pdf</mat-icon> Asistencias PDF
-          </button>
-          <button mat-stroked-button (click)="descargar('asistencias','xls')" [disabled]="downloading()">
-            <mat-icon>table_chart</mat-icon> Asistencias Excel
-          </button>
-          <button mat-stroked-button color="primary" (click)="descargar('calificaciones','pdf')" [disabled]="downloading()">
-            <mat-icon>picture_as_pdf</mat-icon> Calificaciones PDF
-          </button>
-          <button mat-stroked-button color="primary" (click)="descargar('calificaciones','xls')" [disabled]="downloading()">
-            <mat-icon>table_chart</mat-icon> Calificaciones Excel
-          </button>
-          @if (downloading()) { <mat-spinner diameter="24" /> }
-        </div>
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 1: Mis Materias — descarga de reportes
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Mis Materias">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Materias Asignadas</mat-card-title>
+            <mat-card-subtitle>Descarga reportes de calificaciones y asistencias por materia</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+
+            <div *ngIf="loading()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando materias...</p>
+            </div>
+
+            <div *ngIf="!loading() && materiasList().length === 0" class="empty-state">
+              <mat-icon>school</mat-icon>
+              <p>No tienes materias asignadas actualmente</p>
+            </div>
+
+            <div *ngIf="!loading() && materiasList().length > 0" class="materias-grid">
+              <mat-card *ngFor="let materia of materiasList()" class="materia-card">
+                <mat-card-header>
+                  <mat-card-title>{{ materia.nombre }}</mat-card-title>
+                  <mat-card-subtitle>NRC: {{ materia.nrc }}</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <p class="reporte-label">Calificaciones</p>
+                  <div class="button-group">
+                    <button mat-raised-button color="warn"
+                      (click)="descargarReporte(materia.id, 'calificaciones', 'pdf')"
+                      matTooltip="Descargar PDF de calificaciones">
+                      <mat-icon>picture_as_pdf</mat-icon>
+                      PDF
+                    </button>
+                    <button mat-raised-button color="primary"
+                      (click)="descargarReporte(materia.id, 'calificaciones', 'xls')"
+                      matTooltip="Descargar Excel de calificaciones">
+                      <mat-icon>table_chart</mat-icon>
+                      Excel
+                    </button>
+                  </div>
+
+                  <p class="reporte-label">Asistencias</p>
+                  <div class="button-group">
+                    <button mat-raised-button color="warn"
+                      (click)="descargarReporte(materia.id, 'asistencias', 'pdf')"
+                      matTooltip="Descargar PDF de asistencias">
+                      <mat-icon>picture_as_pdf</mat-icon>
+                      PDF
+                    </button>
+                    <button mat-raised-button color="primary"
+                      (click)="descargarReporte(materia.id, 'asistencias', 'xls')"
+                      matTooltip="Descargar Excel de asistencias">
+                      <mat-icon>table_chart</mat-icon>
+                      Excel
+                    </button>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+          </mat-card-content>
+        </mat-card>
       </div>
-    </mat-card-content>
-  </mat-card>
+    </mat-tab>
 
-  <!-- Estadísticas registradas del docente -->
-  <mat-card class="table-card">
-    <mat-card-header>
-      <mat-card-title>Mis estadísticas registradas</mat-card-title>
-      <mat-card-subtitle>Historial de cierres de materia procesados por el sistema</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      @if (loadingReporte()) {
-        <div class="center"><mat-spinner diameter="36" /></div>
-      } @else if (estadisticas().length === 0) {
-        <p class="no-data">No hay estadísticas registradas aún.</p>
-      } @else {
-        <div class="table-wrapper">
-          <table mat-table [dataSource]="dataSource" class="full-width">
-            <ng-container matColumnDef="materia_id">
-              <th mat-header-cell *matHeaderCellDef>Materia ID</th>
-              <td mat-cell *matCellDef="let r">{{ r.materia_id }}</td>
-            </ng-container>
-            <ng-container matColumnDef="periodo_nombre">
-              <th mat-header-cell *matHeaderCellDef>Periodo</th>
-              <td mat-cell *matCellDef="let r">{{ r.periodo_nombre }}</td>
-            </ng-container>
-            <ng-container matColumnDef="promedio_general">
-              <th mat-header-cell *matHeaderCellDef>Promedio calif.</th>
-              <td mat-cell *matCellDef="let r">{{ r.promedio_general | number:'1.1-1' }}</td>
-            </ng-container>
-            <ng-container matColumnDef="porcentaje_asistencia">
-              <th mat-header-cell *matHeaderCellDef>% Asistencia</th>
-              <td mat-cell *matCellDef="let r">
-                <span class="pct-badge" [class.ok]="r.porcentaje_asistencia >= 80" [class.warn]="r.porcentaje_asistencia < 80">
-                  {{ r.porcentaje_asistencia | number:'1.0-1' }}%
-                </span>
-              </td>
-            </ng-container>
-            <ng-container matColumnDef="total_alumnos">
-              <th mat-header-cell *matHeaderCellDef>Alumnos</th>
-              <td mat-cell *matCellDef="let r">{{ r.total_alumnos }}</td>
-            </ng-container>
-            <tr mat-header-row *matHeaderRowDef="columns"></tr>
-            <tr mat-row *matRowDef="let row; columns: columns;"></tr>
-          </table>
-        </div>
-      }
-    </mat-card-content>
-  </mat-card>
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 2: Historial Académico
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Historial Académico">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Materias Impartidas por Periodo</mat-card-title>
+            <mat-card-subtitle>
+              Indicadores de periodos activos e inactivos. Las materias impartidas en múltiples periodos
+              muestran estadísticas comparativas.
+            </mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+
+            <div *ngIf="loadingHistorial()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando historial académico...</p>
+            </div>
+
+            <div *ngIf="!loadingHistorial() && historialesMateria().length === 0" class="empty-state">
+              <mat-icon>history_edu</mat-icon>
+              <p>No hay historial académico disponible</p>
+            </div>
+
+            <div *ngIf="!loadingHistorial() && historialesMateria().length > 0" class="historial-grid">
+              <mat-card *ngFor="let hist of historialesMateria()" class="historial-card"
+                [class.multi-periodo]="hist.tiene_comparativa">
+                <mat-card-header>
+                  <div class="historial-header">
+                    <div>
+                      <mat-card-title>{{ hist.materia_nombre }}</mat-card-title>
+                      <mat-card-subtitle>NRC: {{ hist.materia_nrc }}</mat-card-subtitle>
+                    </div>
+                    <div class="header-badges">
+                      <span *ngIf="hist.tiene_comparativa" class="comparativa-badge">
+                        <mat-icon>compare_arrows</mat-icon>
+                        {{ hist.periodos.length }} periodos
+                      </span>
+                      <span *ngIf="!hist.tiene_comparativa" class="unico-badge">
+                        1 periodo
+                      </span>
+                    </div>
+                  </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                  <div class="periodos-historial">
+                    <div *ngFor="let periodo of hist.periodos" class="periodo-historial-item"
+                      [class.periodo-activo]="periodo.activo"
+                      [class.periodo-inactivo]="!periodo.activo">
+
+                      <!-- Indicador de estado -->
+                      <div class="periodo-estado-header">
+                        <mat-icon class="estado-icon" [class.icon-activo]="periodo.activo" [class.icon-inactivo]="!periodo.activo">
+                          {{ periodo.activo ? 'radio_button_checked' : 'check_circle_outline' }}
+                        </mat-icon>
+                        <span class="periodo-nombre">{{ periodo.nombre }}</span>
+                        <span class="estado-label" [class.activo-label]="periodo.activo" [class.inactivo-label]="!periodo.activo">
+                          {{ periodo.activo ? 'Activo' : 'Cerrado' }}
+                        </span>
+                      </div>
+
+                      <!-- Estadísticas del periodo (si existen) -->
+                      <div *ngIf="periodo.total_alumnos !== undefined" class="stats-periodo">
+                        <div class="stat-row">
+                          <span class="stat-label">Alumnos:</span>
+                          <span class="stat-valor">{{ periodo.total_alumnos }}</span>
+                        </div>
+
+                        <div class="stat-row">
+                          <span class="stat-label">Promedio:</span>
+                          <div class="stat-barra">
+                            <mat-progress-bar mode="determinate" [value]="periodo.promedio_general!"
+                              [ngClass]="colorBarra(periodo.promedio_general!)">
+                            </mat-progress-bar>
+                            <span>{{ periodo.promedio_general!.toFixed(1) }}%</span>
+                          </div>
+                        </div>
+
+                        <div class="stat-row">
+                          <span class="stat-label">Aprobados:</span>
+                          <div class="stat-barra">
+                            <mat-progress-bar mode="determinate" [value]="periodo.porcentaje_aprobados!"
+                              [ngClass]="colorBarra(periodo.porcentaje_aprobados!)">
+                            </mat-progress-bar>
+                            <span>{{ periodo.porcentaje_aprobados!.toFixed(1) }}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div *ngIf="periodo.total_alumnos === undefined && !periodo.activo" class="sin-stats">
+                        <mat-icon>info</mat-icon> Sin estadísticas registradas
+                      </div>
+
+                      <div *ngIf="periodo.total_alumnos === undefined && periodo.activo" class="sin-stats activo-info">
+                        <mat-icon>pending</mat-icon> Periodo en curso — estadísticas al cierre
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Comparativa si hay más de un periodo con stats -->
+                  <div *ngIf="hist.tiene_comparativa && promedioComparativo(hist.periodos)" class="comparativa-resumen">
+                    <mat-icon>analytics</mat-icon>
+                    Variación entre periodos: <strong>{{ promedioComparativo(hist.periodos) }}</strong> en promedio
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         TAB 3: Estadísticas
+    ════════════════════════════════════════════════════════════════════ -->
+    <mat-tab label="Estadísticas de Materias">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Estadísticas por Materia y Periodo</mat-card-title>
+            <mat-card-subtitle>Desempeño de tus materias en cada periodo cursado</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+
+            <div *ngIf="loadingEstadisticas()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando estadísticas...</p>
+            </div>
+
+            <div *ngIf="!loadingEstadisticas() && estadisticasList().length === 0" class="empty-state">
+              <mat-icon>assessment</mat-icon>
+              <p>No hay estadísticas registradas aún</p>
+              <small>Las estadísticas se registran al cierre de cada materia</small>
+            </div>
+
+            <div *ngIf="!loadingEstadisticas() && estadisticasList().length > 0">
+              <div class="table-responsive">
+                <table mat-table [dataSource]="estadisticasList()" class="estadisticas-table">
+
+                  <ng-container matColumnDef="materia_nombre">
+                    <th mat-header-cell *matHeaderCellDef>Materia</th>
+                    <td mat-cell *matCellDef="let e">{{ e.materia_nombre }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="materia_nrc">
+                    <th mat-header-cell *matHeaderCellDef>NRC</th>
+                    <td mat-cell *matCellDef="let e">{{ e.materia_nrc }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="periodo_nombre">
+                    <th mat-header-cell *matHeaderCellDef>Periodo</th>
+                    <td mat-cell *matCellDef="let e">{{ e.periodo_nombre }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="total_alumnos">
+                    <th mat-header-cell *matHeaderCellDef>Alumnos</th>
+                    <td mat-cell *matCellDef="let e">{{ e.total_alumnos }}</td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="promedio_general">
+                    <th mat-header-cell *matHeaderCellDef>Promedio General</th>
+                    <td mat-cell *matCellDef="let e">
+                      <div class="progress-inline">
+                        <mat-progress-bar mode="determinate" [value]="e.promedio_general"
+                          [ngClass]="colorBarra(e.promedio_general)">
+                        </mat-progress-bar>
+                        <span>{{ e.promedio_general.toFixed(1) }}%</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="porcentaje_aprobados">
+                    <th mat-header-cell *matHeaderCellDef>% Aprobados</th>
+                    <td mat-cell *matCellDef="let e">
+                      <div class="progress-inline">
+                        <mat-progress-bar mode="determinate" [value]="e.porcentaje_aprobados"
+                          [ngClass]="colorBarra(e.porcentaje_aprobados)">
+                        </mat-progress-bar>
+                        <span>{{ e.porcentaje_aprobados.toFixed(1) }}%</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <ng-container matColumnDef="fecha_registro">
+                    <th mat-header-cell *matHeaderCellDef>Fecha Registro</th>
+                    <td mat-cell *matCellDef="let e">{{ e.fecha_registro | date:'dd/MM/yyyy' }}</td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="columnasEstadisticas"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columnasEstadisticas;"></tr>
+                </table>
+              </div>
+
+              <mat-paginator
+                [length]="totalEstadisticas()"
+                [pageSize]="limiteEstadisticas()"
+                [pageSizeOptions]="[5, 10, 25]"
+                (page)="onPaginaEstadisticasChange($event)">
+              </mat-paginator>
+            </div>
+
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
 </div>
