@@ -33,7 +33,7 @@ export class DocentesComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort)      sort!: MatSort;
 
-  displayedColumns = ['nombre', 'apellido', 'email', 'clave_empleado', 'departamento', 'acciones'];
+  displayedColumns = ['nombre', 'apellido', 'email', 'departamento', 'acciones'];
   dataSource = new MatTableDataSource<Docente>([]);
   loading    = signal(false);
   importing  = signal(false);
@@ -49,7 +49,6 @@ export class DocentesComponent implements OnInit {
         this.nombreMostrado(item),
         this.apellidoMostrado(item),
         item.email,
-        item.clave_empleado,
         item.departamento
       ].join(' ').toLowerCase();
 
@@ -139,14 +138,28 @@ export class DocentesComponent implements OnInit {
   }
 
   darDeBaja(d: Docente) {
+    const docenteId = this.getDocenteId(d);
+    if (!docenteId) {
+      this.snack.open('No se encontro el ID del docente', '', { duration: 3000, panelClass: 'snack-error' });
+      return;
+    }
+
     this.dialog.open(ConfirmDialogComponent, {
       data: { title: 'Dar de baja', message: `Dar de baja a ${this.nombreMostrado(d)} ${this.apellidoMostrado(d)}?` }
     }).afterClosed().subscribe(ok => {
       if (!ok) return;
-      this.svc.darDeBaja(d.id).subscribe({
+      this.svc.darDeBaja(docenteId).subscribe({
         next: () => { this.snack.open('Docente dado de baja', '', { duration: 2500 }); this.load(); },
-        error: () => this.snack.open('Error', '', { duration: 3000, panelClass: 'snack-error' })
+        error: err => {
+          const msg = err.error?.detail ?? err.error?.message ?? 'Error al dar de baja docente';
+          this.snack.open(msg, '', { duration: 4000, panelClass: 'snack-error' });
+        }
       });
     });
+  }
+
+  private getDocenteId(d: Docente) {
+    const raw = d as any;
+    return raw.id ?? raw.docente_id ?? raw.id_docente ?? raw.pk ?? raw.clave_empleado;
   }
 }

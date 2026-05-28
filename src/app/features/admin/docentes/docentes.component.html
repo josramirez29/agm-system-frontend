@@ -38,10 +38,6 @@
               <th mat-header-cell *matHeaderCellDef>Correo</th>
               <td mat-cell *matCellDef="let r">{{ r.email }}</td>
             </ng-container>
-            <ng-container matColumnDef="clave_empleado">
-              <th mat-header-cell *matHeaderCellDef>Clave</th>
-              <td mat-cell *matCellDef="let r">{{ r.clave_empleado }}</td>
-            </ng-container>
             <ng-container matColumnDef="departamento">
               <th mat-header-cell *matHeaderCellDef>Departamento</th>
               <td mat-cell *matCellDef="let r">{{ r.departamento ?? '—' }}</td>

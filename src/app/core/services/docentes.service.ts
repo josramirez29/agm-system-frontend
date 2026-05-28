@@ -3,6 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Docente } from '../models';
 import { map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
+import { throwError } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class DocentesService {
@@ -23,8 +25,22 @@ export class DocentesService {
     return this.http.post<any>(`${this.base}/docentes/importar/`, fd);
   }
 
-  darDeBaja(id: number) {
-    return this.http.delete(`${this.base}/docentes/${id}/`);
+  darDeBaja(id: number | string) {
+    return this.http.delete(`${this.base}/docentes/${id}/baja`).pipe(
+      catchError(err => {
+        if (err.status === 404 || err.status === 405) {
+          return this.http.delete(`${this.base}/docentes/${id}/`).pipe(
+            catchError(aliasErr => {
+              if (aliasErr.status === 404 || aliasErr.status === 405) {
+                return this.http.delete(`${this.base}/docentes/${id}`);
+              }
+              return throwError(() => aliasErr);
+            })
+          );
+        }
+        return throwError(() => err);
+      })
+    );
   }
 
   getMateriasByDocente(docenteId: number) {
