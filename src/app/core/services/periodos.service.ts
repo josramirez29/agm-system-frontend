@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class PeriodosService {
   private http = inject(HttpClient);
-  private base = `${environment.apiUrls.periodos}/api/periodos`;
+  private base = `${environment.apiUrls.periodos}`;
 
   getAll(page = 1, search = '') {
     let params = new HttpParams().set('page', page);

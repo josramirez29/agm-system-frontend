@@ -12,6 +12,15 @@ export class AuthService {
 
   readonly currentUser = signal<LoginResponse | null>(this.loadUser());
 
+  private normalizeRole(role: string | null | undefined): LoginResponse['rol'] | null {
+    const normalized = String(role ?? '').trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized === 'admin' || normalized === 'administrador') return 'Administrador';
+    if (normalized === 'docente' || normalized === 'profesor') return 'Docente';
+    if (normalized === 'alumno' || normalized === 'estudiante') return 'Alumno';
+    return null;
+  }
+
   login(req: LoginRequest) {
     const body = new URLSearchParams();
     body.set('username', req.email);
@@ -27,7 +36,7 @@ export class AuthService {
         const fullUser: LoginResponse = {
           access_token: res.access_token,
           token_type:   res.token_type,
-          rol:          payload.rol as LoginResponse['rol'],
+          rol:          this.normalizeRole(payload.rol) ?? 'Alumno',
           email:        req.email,
           id:           Number(payload.sub),
         };
@@ -61,7 +70,7 @@ export class AuthService {
   }
 
   getRole(): string | null {
-    return this.currentUser()?.rol ?? null;
+    return this.normalizeRole(this.currentUser()?.rol) ?? null;
   }
 
   decodeToken(token: string): JwtPayload {
@@ -82,7 +91,12 @@ export class AuthService {
   private loadUser(): LoginResponse | null {
     try {
       const raw = localStorage.getItem('agm_user');
-      return raw ? JSON.parse(raw) : null;
+      if (!raw) return null;
+      const user = JSON.parse(raw) as LoginResponse;
+      return {
+        ...user,
+        rol: this.normalizeRole(user.rol) ?? user.rol,
+      };
     } catch { return null; }
   }
 }
