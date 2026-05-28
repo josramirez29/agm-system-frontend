@@ -22,7 +22,7 @@ export class AlumnosService {
     );
   }
 
-  importExcel(file: File) {
+  importPdf(file: File) {
     const fd = new FormData();
     fd.append('file', file);
     return this.http.post<any>(`${this.base}/alumnos/importar/`, fd);
