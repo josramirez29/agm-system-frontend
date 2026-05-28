@@ -132,6 +132,8 @@ export class MateriaFormDialogComponent {
     { value: 'V', label: 'Viernes' },
     { value: 'S', label: 'Sábado' },
   ] as const;
+  private readonly defaultStartTime = '08:00';
+  private readonly defaultEndTime = '09:00';
   form = this.fb.group({
     nrc:        [this.data?.nrc ?? '', [Validators.required, Validators.pattern(/^[0-9]{5}$/), Validators.maxLength(5)]],
     nombre:     [this.data?.nombre ?? '', Validators.required],
@@ -349,8 +351,8 @@ export class MateriaFormDialogComponent {
         return {
           code: day.value,
           enabled: Boolean(item?.enabled),
-          start: String(item?.start ?? '').trim(),
-          end: String(item?.end ?? '').trim(),
+          start: String(item?.start ?? this.defaultStartTime).trim() || this.defaultStartTime,
+          end: String(item?.end ?? this.defaultEndTime).trim() || this.defaultEndTime,
         };
       })
       .filter(day => day.enabled);
@@ -420,8 +422,8 @@ export class MateriaFormDialogComponent {
   private createDaySchedule() {
     return this.fb.group({
       enabled: [false],
-      start: [''],
-      end: [''],
+      start: [this.defaultStartTime],
+      end: [this.defaultEndTime],
     });
   }
 

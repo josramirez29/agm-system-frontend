@@ -78,6 +78,27 @@ export class MateriasComponent implements OnInit {
     ref.afterClosed().subscribe(saved => { if (saved) { this.snack.open('Guardado', '', { duration: 2500 }); this.load(); } });
   }
 
+  closeMateria(m: Materia) {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Cerrar materia',
+        message: `¿Cerrar "${m.nombre}" (NRC: ${m.nrc})?`,
+      }
+    }).afterClosed().subscribe(ok => {
+      if (!ok) return;
+      this.svc.cerrar(m.id).subscribe({
+        next: () => {
+          this.snack.open('Materia cerrada', '', { duration: 2500 });
+          this.load();
+        },
+        error: (err) => {
+          const detail = err?.error?.message ?? err?.error?.detail ?? 'Error al cerrar la materia';
+          this.snack.open(detail, 'Cerrar', { duration: 3500, panelClass: 'snack-error' });
+        }
+      });
+    });
+  }
+
   openImportDialog() {
     const ref = this.dialog.open(MateriaImportDialogComponent, { width: '560px' });
     ref.afterClosed().subscribe(saved => {

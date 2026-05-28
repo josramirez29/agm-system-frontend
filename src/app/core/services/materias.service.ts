@@ -7,7 +7,7 @@ import { map } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class MateriasService {
   private http = inject(HttpClient);
-  private base = `${environment.apiUrls.periodos}/materias`;
+  private base = `${environment.apiUrls.materias}`;
 
   getAll(page = 1, limit = 10, search = '') {
     let params = new HttpParams().set('page', page).set('limit', limit);
@@ -27,6 +27,10 @@ export class MateriasService {
 
   delete(id: number) {
     return this.http.delete(`${this.base}/${id}/`);
+  }
+
+  cerrar(id: number) {
+    return this.http.post(`${this.base}/${id}/cerrar/`, {});
   }
 
   importPdf(periodoId: number, file: File) {
