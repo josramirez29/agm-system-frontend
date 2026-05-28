@@ -37,7 +37,7 @@ export class PeriodosComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort)      sort!: MatSort;
 
-  displayedColumns = ['nombre', 'fecha_inicio', 'fecha_fin', 'activo', 'acciones'];
+  displayedColumns = ['id', 'nombre', 'plan_estudios', 'fecha_inicio', 'fecha_fin', 'activo', 'acciones'];
   dataSource = new MatTableDataSource<Periodo>([]);
   loading = signal(false);
   total   = signal(0);

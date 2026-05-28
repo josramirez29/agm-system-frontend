@@ -40,14 +40,23 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           @if (form.get('nombre')?.touched && form.get('nombre')?.invalid) { <mat-error>Requerido</mat-error> }
         </mat-form-field>
         <mat-form-field appearance="outline">
-          <mat-label>Periodo</mat-label>
-          <mat-select formControlName="periodo_id">
-            @for (periodo of periodos(); track periodo.id) {
-              <mat-option [value]="periodo.id">{{ periodo.nombre }} (ID: {{ periodo.id }})</mat-option>
-            }
-          </mat-select>
+          <mat-label>Periodo ID</mat-label>
+          <input
+            matInput
+            formControlName="periodo_id"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            placeholder="Ej. 3"
+          />
           @if (form.get('periodo_id')?.touched && form.get('periodo_id')?.hasError('required')) { <mat-error>Requerido</mat-error> }
+          @if (form.get('periodo_id')?.touched && form.get('periodo_id')?.hasError('pattern')) { <mat-error>Solo números</mat-error> }
         </mat-form-field>
+        @if (selectedPeriodo()) {
+          <div class="full periodo-summary">
+            <strong>{{ selectedPeriodo()?.nombre }}</strong>
+            <div class="upload-hint">Plan de estudios: {{ selectedPeriodo()?.plan_estudios ?? '—' }}</div>
+          </div>
+        }
         <mat-form-field appearance="outline">
           <mat-label>Docente</mat-label>
           <input matInput [formControl]="docenteSearchCtrl" [matAutocomplete]="docenteAuto" placeholder="Escribe para buscar" />
@@ -66,24 +75,22 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
           <mat-label>Clave</mat-label>
           <input matInput formControlName="clave" />
         </mat-form-field>
-        <div class="full schedule-grid">
+        <div class="full schedule-grid" formGroupName="schedule">
           <div class="schedule-title">Horario</div>
-          <div class="schedule-hint">Selecciona los días y la franja horaria</div>
-          <div formGroupName="dias" class="days-grid">
-            @for (day of days; track day.value) {
-              <mat-checkbox [formControlName]="day.value">{{ day.label }}</mat-checkbox>
-            }
-          </div>
-        <mat-form-field appearance="outline">
-          <mat-label>Hora inicio</mat-label>
-          <input matInput type="time" formControlName="hora_inicio" />
-          @if (form.get('hora_inicio')?.touched && form.get('hora_inicio')?.hasError('required')) { <mat-error>Requerido</mat-error> }
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-          <mat-label>Hora fin</mat-label>
-          <input matInput type="time" formControlName="hora_fin" />
-          @if (form.get('hora_fin')?.touched && form.get('hora_fin')?.hasError('required')) { <mat-error>Requerido</mat-error> }
-        </mat-form-field>
+          <div class="schedule-hint">Activa cada día y define su propio horario</div>
+          @for (day of days; track day.value) {
+            <div class="day-row" [formGroupName]="day.value">
+              <mat-checkbox formControlName="enabled">{{ day.label }}</mat-checkbox>
+              <mat-form-field appearance="outline">
+                <mat-label>Inicio</mat-label>
+                <input matInput type="time" formControlName="start" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Fin</mat-label>
+                <input matInput type="time" formControlName="end" />
+              </mat-form-field>
+            </div>
+          }
         </div>
       </form>
     </mat-dialog-content>
@@ -96,11 +103,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   `,
   styles: [`.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;padding-top:.5rem}
             .full{grid-column:1/-1}
-            .schedule-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem 1rem;align-items:start;margin-top:.25rem}
+            .schedule-grid{display:grid;grid-template-columns:1fr;gap:.75rem 1rem;align-items:start;margin-top:.25rem}
             .schedule-title{grid-column:1/-1;font-weight:700}
             .schedule-hint{grid-column:1/-1;color:var(--muted-text,#666);font-size:.9rem;margin-top:-.25rem}
-            .days-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem 1rem}
-            .days-grid mat-checkbox{justify-self:start}`]
+            .day-row{display:grid;grid-template-columns:140px 1fr 1fr;gap:0 1rem;align-items:center}
+            .day-row mat-checkbox{justify-self:start}`]
 })
 export class MateriaFormDialogComponent {
   data   = inject<Materia | null>(MAT_DIALOG_DATA);
@@ -119,29 +126,27 @@ export class MateriaFormDialogComponent {
   docenteSearchCtrl = new FormControl<string>('', { nonNullable: true });
   days = [
     { value: 'L', label: 'Lunes' },
-    { value: 'M', label: 'Martes' },
-    { value: 'X', label: 'Miércoles' },
+    { value: 'A', label: 'Martes' },
+    { value: 'M', label: 'Miércoles' },
     { value: 'J', label: 'Jueves' },
     { value: 'V', label: 'Viernes' },
     { value: 'S', label: 'Sábado' },
   ] as const;
-    form = this.fb.group({
+  form = this.fb.group({
     nrc:        [this.data?.nrc ?? '', [Validators.required, Validators.pattern(/^[0-9]{5}$/), Validators.maxLength(5)]],
     nombre:     [this.data?.nombre ?? '', Validators.required],
-    periodo_id: [this.data?.periodo_id ?? '', Validators.required],
+    periodo_id: [this.data?.periodo_id ?? '', [Validators.required, Validators.pattern(/^[0-9]+$/)]],
     docente_id: [this.data?.docente_id ?? null],
     docente_nombre: [this.data?.docente_nombre ?? ''],
     seccion:    [this.data?.seccion ?? '', Validators.required],
     clave:      [this.data?.clave ?? ''],
-    hora_inicio: ['08:00', Validators.required],
-    hora_fin: ['09:00', Validators.required],
-    dias: this.fb.group({
-      L: [false],
-      M: [false],
-      X: [false],
-      J: [false],
-      V: [false],
-      S: [false],
+    schedule: this.fb.group({
+      L: this.createDaySchedule(),
+      A: this.createDaySchedule(),
+      M: this.createDaySchedule(),
+      J: this.createDaySchedule(),
+      V: this.createDaySchedule(),
+      S: this.createDaySchedule(),
     }),
   });
 
@@ -162,31 +167,58 @@ export class MateriaFormDialogComponent {
   }
 
   ngOnInit() {
+    if (this.data?.horario) {
+      this.patchHorario(this.data.horario);
+    }
     void this.loadLookups();
     this.applyInitialValues();
   }
 
   private async loadLookups() {
-    const [periodos, docentes] = await Promise.all([
+    const periodosResult = await Promise.allSettled([
       this.loadAllPages<Periodo>((page) => this.periodosSvc.getAll(page)),
+    ]);
+    const docentesResult = await Promise.allSettled([
       this.loadAllPages<Docente>((page) => this.docentesSvc.getAll(page)),
     ]);
-    this.periodos.set(periodos);
-    this.docentes.set(docentes);
-    this.filteredDocentes.set(this.filterDocentes(this.docenteSearchCtrl.value));
-    if (this.data?.docente_id) {
-      const matched = docentes.find(d => d.id === this.data?.docente_id) ?? null;
-      this.selectedDocente = matched;
-      const label = matched ? this.docenteLabel(matched) : (this.data.docente_nombre ?? '');
-      this.docenteSearchCtrl.setValue(label, { emitEvent: false });
-      this.form.patchValue({
-        docente_id: this.data.docente_id,
-        docente_nombre: label,
-      }, { emitEvent: false });
-    } else if (this.data?.docente_nombre) {
-      this.docenteSearchCtrl.setValue(this.data.docente_nombre, { emitEvent: false });
-      this.form.patchValue({ docente_nombre: this.data.docente_nombre }, { emitEvent: false });
+
+    if (periodosResult[0].status === 'fulfilled') {
+      this.periodos.set(periodosResult[0].value);
+    } else {
+      this.periodos.set([]);
+      this.snack.open('No se pudieron cargar los periodos', 'Cerrar', { duration: 3500, panelClass: 'snack-error' });
     }
+
+    if (this.data?.periodo_id) {
+      this.form.patchValue({ periodo_id: this.data.periodo_id }, { emitEvent: false });
+    }
+
+    if (docentesResult[0].status === 'fulfilled') {
+      const docentes = docentesResult[0].value;
+      this.docentes.set(docentes);
+      this.filteredDocentes.set(this.filterDocentes(this.docenteSearchCtrl.value));
+      if (this.data?.docente_id) {
+        const matched = docentes.find(d => d.id === this.data?.docente_id) ?? null;
+        this.selectedDocente = matched;
+        const label = matched ? this.docenteLabel(matched) : (this.data.docente_nombre ?? '');
+        this.docenteSearchCtrl.setValue(label, { emitEvent: false });
+        this.form.patchValue({
+          docente_id: this.data.docente_id,
+          docente_nombre: label,
+        }, { emitEvent: false });
+      } else if (this.data?.docente_nombre) {
+        this.docenteSearchCtrl.setValue(this.data.docente_nombre, { emitEvent: false });
+        this.form.patchValue({ docente_nombre: this.data.docente_nombre }, { emitEvent: false });
+      }
+    } else {
+      this.docentes.set([]);
+      this.filteredDocentes.set([]);
+      if (this.data?.docente_nombre) {
+        this.docenteSearchCtrl.setValue(this.data.docente_nombre, { emitEvent: false });
+        this.form.patchValue({ docente_nombre: this.data.docente_nombre }, { emitEvent: false });
+      }
+    }
+
     if (this.data?.horario) {
       this.patchHorario(this.data.horario);
     }
@@ -237,30 +269,31 @@ export class MateriaFormDialogComponent {
   }
 
   private patchHorario(horario: string) {
-    const diasGroup = this.form.get('dias') as FormGroup;
-    diasGroup.reset({
-      L: false,
-      M: false,
-      X: false,
-      J: false,
-      V: false,
-      S: false,
-    }, { emitEvent: false });
+    const scheduleGroup = this.form.get('schedule') as FormGroup;
+    this.days.forEach(day => {
+      const dayGroup = scheduleGroup.get(day.value) as FormGroup;
+      dayGroup.patchValue({
+        enabled: false,
+        start: '',
+        end: '',
+      }, { emitEvent: false });
+    });
     const segments = horario.split(';').map(part => part.trim()).filter(Boolean);
-    let inicio = '';
-    let fin = '';
     for (const segment of segments) {
-      const match = segment.match(/^([LMXJVS])\s+([0-9]{4}|[0-9]{2}:[0-9]{2})-([0-9]{4}|[0-9]{2}:[0-9]{2})$/i);
+      const match = segment.match(/^(.+?)\s+([0-9]{4}|[0-9]{2}:[0-9]{2})\s*-\s*([0-9]{4}|[0-9]{2}:[0-9]{2})$/i);
       if (!match) continue;
-      const dia = match[1].toUpperCase();
+      const dia = this.normalizeDayCode(this.extractDayToken(match[1]));
       const a = this.normalizeTime(match[2]);
       const b = this.normalizeTime(match[3]);
-      if (!inicio) inicio = a;
-      if (!fin) fin = b;
-      diasGroup.get(dia)?.setValue(true, { emitEvent: false });
+      const dayGroup = scheduleGroup.get(dia) as FormGroup | null;
+      if (dayGroup) {
+        dayGroup.patchValue({
+          enabled: true,
+          start: a,
+          end: b,
+        }, { emitEvent: false });
+      }
     }
-    if (inicio) this.form.patchValue({ hora_inicio: inicio }, { emitEvent: false });
-    if (fin) this.form.patchValue({ hora_fin: fin }, { emitEvent: false });
   }
 
   private normalizeTime(value: string) {
@@ -273,30 +306,80 @@ export class MateriaFormDialogComponent {
     return value;
   }
 
+  private normalizeDayCode(value: string) {
+    const token = value
+      .trim()
+      .toUpperCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+
+    if (token === 'X' || token === 'MIERCOLES' || token === 'MIE') return 'M';
+    if (token === 'L' || token === 'LUNES') return 'L';
+    if (token === 'A' || token === 'MARTES') return 'A';
+    if (token === 'M') return 'M';
+    if (token === 'J' || token === 'JUEVES') return 'J';
+    if (token === 'V' || token === 'VIERNES') return 'V';
+    if (token === 'S' || token === 'SABADO') return 'S';
+    return token;
+  }
+
+  selectedPeriodo() {
+    const periodoId = Number(this.form.get('periodo_id')?.value ?? 0);
+    if (!periodoId) return null;
+    return this.periodos().find(periodo => periodo.id === periodoId) ?? null;
+  }
+
+  private extractDayToken(segment: string) {
+    const cleaned = segment.trim();
+    const byLeading = cleaned.match(/^([A-ZÁÉÍÓÚÜÑ]+)\s+/i);
+    if (byLeading) return byLeading[1];
+
+    const byWord = cleaned.match(/\b(LUNES|MARTES|MIERCOLES|MIÉRCOLES|JUEVES|VIERNES|SABADO|SÁBADO|L|A|M|J|V|S|X)\b/i);
+    return byWord?.[1] ?? cleaned;
+  }
+
   save() {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving.set(true);
     const raw = this.form.getRawValue();
-    const horaInicio = String(this.form.get('hora_inicio')?.value ?? '').trim();
-    const horaFin = String(this.form.get('hora_fin')?.value ?? '').trim();
-    const selectedDays = this.days.filter(day => Boolean((raw.dias as any)?.[day.value])).map(day => day.value);
+    const schedule = raw.schedule as Record<string, { enabled?: boolean; start?: string; end?: string }>;
+    const selectedDays = this.days
+      .map(day => {
+        const item = schedule?.[day.value];
+        return {
+          code: day.value,
+          enabled: Boolean(item?.enabled),
+          start: String(item?.start ?? '').trim(),
+          end: String(item?.end ?? '').trim(),
+        };
+      })
+      .filter(day => day.enabled);
+
     if (!selectedDays.length) {
       this.snack.open('Selecciona al menos un día', 'Cerrar', { duration: 3500, panelClass: 'snack-error' });
       this.saving.set(false);
       return;
     }
-    if (!horaInicio || !horaFin) {
-      this.snack.open('Indica hora de inicio y fin', 'Cerrar', { duration: 3500, panelClass: 'snack-error' });
+    const invalidDay = selectedDays.find(day => !day.start || !day.end);
+    if (invalidDay) {
+      this.snack.open(`Completa la hora de ${this.labelForDay(invalidDay.code)}`, 'Cerrar', { duration: 3500, panelClass: 'snack-error' });
       this.saving.set(false);
       return;
     }
-    if (horaFin <= horaInicio) {
-      this.snack.open('La hora fin debe ser mayor que la hora inicio', 'Cerrar', { duration: 3500, panelClass: 'snack-error' });
+
+    const invalidRange = selectedDays.find(day => day.end <= day.start);
+    if (invalidRange) {
+      this.snack.open(
+        `La hora fin debe ser mayor que la hora inicio en ${this.labelForDay(invalidRange.code)}`,
+        'Cerrar',
+        { duration: 3500, panelClass: 'snack-error' },
+      );
       this.saving.set(false);
       return;
     }
+
     const horario = selectedDays
-      .map(day => `${day} ${horaInicio.replace(':', '')}-${horaFin.replace(':', '')}`)
+      .map(day => `${day.code} ${day.start.replace(':', '')}-${day.end.replace(':', '')}`)
       .join(' ; ');
     const docenteNombre = this.selectedDocente
       ? this.docenteLabel(this.selectedDocente)
@@ -332,5 +415,17 @@ export class MateriaFormDialogComponent {
         this.saving.set(false);
       }
     });
+  }
+
+  private createDaySchedule() {
+    return this.fb.group({
+      enabled: [false],
+      start: [''],
+      end: [''],
+    });
+  }
+
+  private labelForDay(code: string) {
+    return this.days.find(day => day.value === code)?.label ?? code;
   }
 }

@@ -9,8 +9,8 @@ export class MateriasService {
   private http = inject(HttpClient);
   private base = `${environment.apiUrls.periodos}/materias`;
 
-  getAll(page = 1, search = '') {
-    let params = new HttpParams().set('page', page);
+  getAll(page = 1, limit = 10, search = '') {
+    let params = new HttpParams().set('page', page).set('limit', limit);
     if (search) params = params.set('search', search);
     return this.http.get<ApiResponse<PaginatedResponse<Materia>>>(this.base + '/', { params }).pipe(
       map(r => (r as any).data ?? r)
@@ -27,5 +27,12 @@ export class MateriasService {
 
   delete(id: number) {
     return this.http.delete(`${this.base}/${id}/`);
+  }
+
+  importPdf(periodoId: number, file: File) {
+    const fd = new FormData();
+    fd.append('periodo_id', String(periodoId));
+    fd.append('archivo', file);
+    return this.http.post<any>(`${this.base}/importar/`, fd);
   }
 }

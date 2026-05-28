@@ -13,9 +13,11 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { PageEvent } from '@angular/material/paginator';
 import { MateriasService } from '../../../core/services/materias.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MateriaFormDialogComponent } from './materia-form-dialog.component';
+import { MateriaImportDialogComponent } from './materia-import-dialog.component';
 import { Materia } from '../../../core/models';
 
 @Component({
@@ -35,18 +37,24 @@ export class MateriasComponent implements OnInit {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort)      sort!: MatSort;
 
-  displayedColumns = ['nrc', 'nombre', 'periodo_nombre', 'docente_nombre', 'acciones'];
+  displayedColumns = ['nrc', 'nombre', 'periodo_nombre', 'horario', 'docente_nombre', 'acciones'];
   dataSource = new MatTableDataSource<Materia>([]);
   loading = signal(false);
+  importing = signal(false);
+  total = signal(0);
+  pageIndex = 0;
+  pageSize = 10;
+  searchTerm = '';
 
   ngOnInit() { this.load(); }
 
   load() {
     this.loading.set(true);
-    this.svc.getAll().subscribe({
+    this.svc.getAll(this.pageIndex + 1, this.pageSize, this.searchTerm).subscribe({
       next: r => {
-        this.dataSource.data = (r as any).results ?? [];
-        setTimeout(() => { this.dataSource.paginator = this.paginator; this.dataSource.sort = this.sort; });
+        const payload = (r as any);
+        this.dataSource.data = payload.results ?? [];
+        this.total.set(payload.count ?? this.dataSource.data.length);
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -54,12 +62,30 @@ export class MateriasComponent implements OnInit {
   }
 
   applyFilter(e: Event) {
-    this.dataSource.filter = (e.target as HTMLInputElement).value.trim().toLowerCase();
+    this.searchTerm = (e.target as HTMLInputElement).value.trim().toLowerCase();
+    this.pageIndex = 0;
+    this.load();
+  }
+
+  onPage(event: PageEvent) {
+    this.pageIndex = event.pageIndex;
+    this.pageSize = event.pageSize;
+    this.load();
   }
 
   openForm(materia?: Materia) {
     const ref = this.dialog.open(MateriaFormDialogComponent, { width: '520px', data: materia ?? null });
     ref.afterClosed().subscribe(saved => { if (saved) { this.snack.open('Guardado', '', { duration: 2500 }); this.load(); } });
+  }
+
+  openImportDialog() {
+    const ref = this.dialog.open(MateriaImportDialogComponent, { width: '560px' });
+    ref.afterClosed().subscribe(saved => {
+      if (saved) {
+        this.snack.open('Importación completada', '', { duration: 2500 });
+        this.load();
+      }
+    });
   }
 
   delete(m: Materia) {

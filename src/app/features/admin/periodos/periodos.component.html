@@ -19,9 +19,17 @@
       } @else {
         <div class="table-wrapper">
           <table mat-table [dataSource]="dataSource" matSort class="full-width">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+              <td mat-cell *matCellDef="let r">{{ r.id }}</td>
+            </ng-container>
             <ng-container matColumnDef="nombre">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
               <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
+            </ng-container>
+            <ng-container matColumnDef="plan_estudios">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Plan</th>
+              <td mat-cell *matCellDef="let r">{{ r.plan_estudios ?? '—' }}</td>
             </ng-container>
             <ng-container matColumnDef="fecha_inicio">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Inicio</th>
