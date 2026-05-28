@@ -83,21 +83,36 @@ export class DocentesComponent implements OnInit {
   }
 
   private separarNombre(d: Docente) {
-    const nombre = d.nombre?.trim() ?? '';
-    const apellido = d.apellido?.trim() ?? '';
-    const campoConComa = [nombre, apellido].find(valor => valor.includes(','));
+    const raw = d as any;
+    const nombre = (raw.nombre ?? raw.nombre_completo ?? raw.nombreCompleto ?? raw.full_name ?? raw.name ?? '').trim();
+    const apellido = (raw.apellido ?? raw.apellidos ?? raw.last_name ?? '').trim();
+    const campoConSeparador = [nombre, apellido].find(valor => /[,;]/.test(valor));
 
-    if (!campoConComa) {
+    if (campoConSeparador) {
+      const [apellidoParte, ...nombreParts] = campoConSeparador.split(/[,;]/);
+      const nombreSeparado = nombreParts.join(' ').trim();
+      const apellidoSeparado = apellidoParte.trim();
+
+      return {
+        nombre: nombreSeparado || nombre,
+        apellido: apellidoSeparado || apellido
+      };
+    }
+
+    if (apellido) {
       return { nombre, apellido };
     }
 
-    const [apellidoParte, ...nombreParts] = campoConComa.split(',');
-    const nombreSeparado = nombreParts.join(',').trim();
-    const apellidoSeparado = apellidoParte.trim();
+    const partes = nombre.split(/\s+/).filter(Boolean);
+    if (partes.length < 2) {
+      return { nombre, apellido };
+    }
+
+    const cantidadApellidos = partes.length > 2 ? 2 : 1;
 
     return {
-      nombre: nombreSeparado || nombre,
-      apellido: apellidoSeparado || apellido
+      nombre: partes.slice(cantidadApellidos).join(' '),
+      apellido: partes.slice(0, cantidadApellidos).join(' ')
     };
   }
 
