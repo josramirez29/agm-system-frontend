@@ -13,8 +13,8 @@
           <mat-form-field appearance="outline" class="full">
             <mat-label>Materia</mat-label>
             <mat-select formControlName="materia_id">
-              @for (m of materias(); track m.id) {
-                <mat-option [value]="m.id">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
+              @for (m of materias(); track m.nrc) {
+                <mat-option [value]="m.nrc">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
               }
             </mat-select>
             @if (form.get('materia_id')?.touched && form.get('materia_id')?.invalid) {

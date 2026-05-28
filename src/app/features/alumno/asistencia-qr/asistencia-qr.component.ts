@@ -10,7 +10,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { AlumnosService } from '../../../core/services/alumnos.service';
 import { AsistenciasService } from '../../../core/services/asistencias.service';
 import { MateriasService } from '../../../core/services/materias.service';
-import { forkJoin, of, switchMap } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 interface AlumnoRow { id: number; nombre: string; email: string; matricula: string; nrc: string; }
@@ -38,8 +38,7 @@ export class AsistenciaQrComponent implements OnInit {
   sinSesion   = signal(false);
 
   alumnoRows   = signal<AlumnoRow[]>([]);
-  materiaNames = signal<Map<string, string>>(new Map());
-  materiaDbIds = signal<Map<string, number>>(new Map());
+  materiaNames = signal<Map<string, string>>(new Map());  // NRC → nombre (display only)
   selectedRow  = signal<AlumnoRow | null>(null);
   qrData       = signal<string>('');
 
@@ -47,42 +46,39 @@ export class AsistenciaQrComponent implements OnInit {
     const email = this.auth.currentUser()?.email ?? '';
     if (!email) { this.loading.set(false); this.sinRegistro.set(true); return; }
 
-    this.alumnoSvc.getAll(1, email).pipe(
-      switchMap((res: any) => {
-        const list: AlumnoRow[] = res?.results ?? res ?? [];
-        const rows = list.filter((a: any) => a.email?.toLowerCase() === email.toLowerCase());
-        if (!rows.length) {
-          this.sinRegistro.set(true);
-          return of(null);
-        }
-        this.alumnoRows.set(rows);
-        const nrcs = [...new Set(rows.map((r: AlumnoRow) => r.nrc))];
-        const lookups: Record<string, any> = {};
-        nrcs.forEach(nrc => {
-          lookups[nrc] = this.materiaSvc.getAll(1, 10, String(nrc)).pipe(catchError(() => of(null)));
-        });
-        return (nrcs.length ? forkJoin(lookups) : of<Record<string, any>>({})).pipe(catchError(() => of({})));
-      }),
-      catchError(() => of(null))
-    ).subscribe(results => {
-      if (results) {
-        const dbIds = new Map<string, number>();
-        const names = new Map<string, string>();
-        for (const [nrc, res] of Object.entries(results)) {
-          const mList: any[] = (res as any)?.results ?? res ?? [];
-          const m = mList.find((m: any) => String(m.nrc) === String(nrc));
-          if (m) { dbIds.set(nrc, m.id); names.set(nrc, m.nombre ?? `NRC ${nrc}`); }
-        }
-        this.materiaDbIds.set(dbIds);
-        this.materiaNames.set(names);
-
-        const rows = this.alumnoRows();
-        if (rows.length === 1) {
-          this.doSelectRow(rows[0]);
-          return;
-        }
+    this.alumnoSvc.getAll(1, email).pipe(catchError(() => of(null))).subscribe((res: any) => {
+      const list: AlumnoRow[] = res?.results ?? res ?? [];
+      const rows = list.filter((a: any) => a.email?.toLowerCase() === email.toLowerCase());
+      if (!rows.length) {
+        this.sinRegistro.set(true);
+        this.loading.set(false);
+        return;
       }
-      this.loading.set(false);
+      this.alumnoRows.set(rows);
+      this.loadMateriaNames(rows);  // non-blocking, for display only
+
+      if (rows.length === 1) {
+        this.doSelectRow(rows[0]);
+      } else {
+        this.loading.set(false);
+      }
+    });
+  }
+
+  private loadMateriaNames(rows: AlumnoRow[]) {
+    const nrcs = [...new Set(rows.map(r => r.nrc))];
+    const lookups: Record<string, any> = {};
+    nrcs.forEach(nrc => {
+      lookups[nrc] = this.materiaSvc.getAll(1, 10, String(nrc)).pipe(catchError(() => of(null)));
+    });
+    forkJoin(lookups).pipe(catchError(() => of({}))).subscribe(results => {
+      const names = new Map<string, string>();
+      for (const [nrc, res] of Object.entries(results)) {
+        const mList: any[] = (res as any)?.results ?? res ?? [];
+        const m = mList.find((m: any) => String(m.nrc) === String(nrc));
+        if (m?.nombre) names.set(nrc, m.nombre);
+      }
+      this.materiaNames.set(names);
     });
   }
 
@@ -96,20 +92,16 @@ export class AsistenciaQrComponent implements OnInit {
   generateQr() {
     const row = this.selectedRow();
     if (!row) return;
-    const dbId = this.materiaDbIds().get(row.nrc);
-    if (!dbId) {
-      this.loading.set(false);
-      this.snack.open('No se encontró la materia en el sistema', '', { duration: 3500, panelClass: 'snack-error' });
-      return;
-    }
+    // Use NRC as materia_id — consistent with the key the docente stores: sesion_activa:{nrc}
+    const nrcAsId = Number(row.nrc);
     this.generating.set(true);
     this.sinSesion.set(false);
-    this.asistSvc.generarQrToken({ alumno_id: row.id, materia_id: dbId }).subscribe({
+    this.asistSvc.generarQrToken({ alumno_id: row.id, materia_id: nrcAsId }).subscribe({
       next: tokenData => {
         this.qrData.set(JSON.stringify({
           token_qr: tokenData.token_qr,
           alumno_id: row.id,
-          materia_id: dbId,
+          materia_id: nrcAsId,
           matricula: row.matricula,
           nrc: row.nrc,
           ts: Date.now(),
