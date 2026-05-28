@@ -78,7 +78,7 @@ export class AuthService {
     return JSON.parse(atob(base64));
   }
 
-  
+
   resetPassword(token: string, newPassword: string) {
     const body = { token, new_password: newPassword };
     return this.http.post(`${environment.apiUrls.auth}/auth/reset-password`, body);
