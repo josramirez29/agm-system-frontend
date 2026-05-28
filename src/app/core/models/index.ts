@@ -1,7 +1,7 @@
 export interface LoginRequest { email: string; password: string; }
 export interface LoginResponse {
   access_token: string; token_type: string;
-  rol: 'Administrador' | 'Docente' | 'Alumno';
+  rol: 'ADMIN' | 'DOCENTE' | 'ALUMNO';
   email: string; id: number;
 }
 export interface JwtPayload {

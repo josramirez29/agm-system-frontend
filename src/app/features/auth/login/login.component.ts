@@ -57,7 +57,7 @@ export class LoginComponent {
     this.auth.login(this.form.value as any).subscribe({
       next: () => {
         this.loading.set(false);
-        const routes: Record<string, string> = { Administrador: '/admin', Docente: '/docente', Alumno: '/alumno' };
+        const routes: Record<string, string> = { ADMIN: '/admin', DOCENTE: '/docente', ALUMNO: '/alumno' };
         this.router.navigate([routes[this.auth.getRole() ?? ''] ?? '/login']);
       },
       error: err => {

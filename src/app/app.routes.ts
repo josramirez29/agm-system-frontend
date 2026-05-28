@@ -19,19 +19,19 @@ export const routes: Routes = [
   {
     path: 'admin',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['Administrador'] },
+    data: { roles: ['ADMIN'] },
     loadChildren: () => import('./features/admin/admin.routes').then(m => m.adminRoutes)
   },
   {
     path: 'docente',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['Docente'] },
+    data: { roles: ['DOCENTE'] },
     loadChildren: () => import('./features/docente/docente.routes').then(m => m.docenteRoutes)
   },
   {
     path: 'alumno',
     canActivate: [authGuard, roleGuard],
-    data: { roles: ['Alumno'] },
+    data: { roles: ['ALUMNO'] },
     loadChildren: () => import('./features/alumno/alumno.routes').then(m => m.alumnoRoutes)
   },
   { path: '**', redirectTo: 'login' }
