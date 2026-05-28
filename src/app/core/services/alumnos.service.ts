@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 @Injectable({ providedIn: 'root' })
 export class AlumnosService {
   private http = inject(HttpClient);
-  private base = `${environment.apiUrls.docentes}`;
+  private base = `${environment.apiUrls.alumnos}`;
 
   getAll(page = 1, search = '') {
     let params = new HttpParams().set('page', page);

@@ -1,13 +1,14 @@
 export const environment = {
   production: false,
   apiUrls: {
-    auth:        'http://localhost:9000/api/auth',
-    periodos:    'http://localhost:9000/api/periodos',
-    materias:    'http://localhost:9000/api/periodos',
-    docentes:    'http://localhost:9000/api/docentes',
-    asistencias: 'http://localhost:9000/api/asistencias',
-    reportes:    'http://localhost:9000/api/reportes',
-    calificaciones: 'http://localhost:9000/api/calificaciones',
+    auth:           'http://localhost:9000/api',
+    periodos:       'http://localhost:9000/api',
+    materias:       'http://localhost:9000/api',
+    docentes:       'http://localhost:9000/api',
+    asistencias:    'http://localhost:9000/api',
+    reportes:       'http://localhost:9000/api',
+    calificaciones: 'http://localhost:9000/api',
+    alumnos:        'http://localhost:9000/api',
   },
   jwtKey: 'agm_token',
 };

@@ -32,7 +32,7 @@
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  background: var(--green);
+  background: var(--blue);
   color: #fff;
   padding: .5rem 1.1rem;
   border-radius: var(--radius);
@@ -43,5 +43,5 @@
   transition: background 0.15s;
   border: none;
 
-  &:hover { background: var(--green-text); }
+  &:hover { background: var(--blue-dark); }
 }

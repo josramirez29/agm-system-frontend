@@ -12,20 +12,20 @@ export class PeriodosService {
   getAll(page = 1, search = '') {
     let params = new HttpParams().set('page', page);
     if (search) params = params.set('search', search);
-    return this.http.get<ApiResponse<PaginatedResponse<Periodo>>>(this.base + '/', { params }).pipe(
+    return this.http.get<ApiResponse<PaginatedResponse<Periodo>>>(`${this.base}/periodos/`, { params }).pipe(
       map(r => (r as any).data ?? r)
     );
   }
 
   create(data: Partial<Periodo>) {
-    return this.http.post<Periodo>(this.base + '/', data);
+    return this.http.post<Periodo>(`${this.base}/periodos/`, data);
   }
 
   update(id: number, data: Partial<Periodo>) {
-    return this.http.put<Periodo>(`${this.base}/${id}/`, data);
+    return this.http.put<Periodo>(`${this.base}/periodos/${id}/`, data);
   }
 
   delete(id: number) {
-    return this.http.delete(`${this.base}/${id}/`);
+    return this.http.delete(`${this.base}/periodos/${id}/`);
   }
 }
