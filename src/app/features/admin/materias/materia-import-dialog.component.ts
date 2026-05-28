@@ -12,6 +12,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Periodo } from '../../../core/models';
 import { PeriodosService } from '../../../core/services/periodos.service';
 import { MateriasService } from '../../../core/services/materias.service';
+import { DocentesService } from '../../../core/services/docentes.service';
 import { firstValueFrom } from 'rxjs';
 
 @Component({
@@ -88,6 +89,7 @@ import { firstValueFrom } from 'rxjs';
 export class MateriaImportDialogComponent {
   private fb = inject(FormBuilder);
   private svc = inject(MateriasService);
+  private docentesSvc = inject(DocentesService);
   private periodosSvc = inject(PeriodosService);
   private ref = inject(MatDialogRef<MateriaImportDialogComponent>);
   private snack = inject(MatSnackBar);
@@ -145,11 +147,14 @@ export class MateriaImportDialogComponent {
       return;
     }
     this.importing.set(true);
-    this.svc.importPdf(periodoId, this.file).subscribe({
+    const file = this.file;
+    this.svc.importPdf(periodoId, file).subscribe({
       next: (r) => {
         this.importing.set(false);
         this.snack.open((r as any).message ?? 'Importación completada', '', { duration: 3500 });
         this.ref.close(true);
+        // Sync secundario a ms-docentes para poblar materias_docente (fire-and-forget)
+        this.docentesSvc.importPdf(file).subscribe({ error: () => {} });
       },
       error: (err) => {
         this.importing.set(false);

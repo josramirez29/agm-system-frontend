@@ -44,8 +44,24 @@ export class DocentesService {
   }
 
   getMateriasByDocente(docenteId: number) {
-    return this.http.get<any>(`${this.base}/docentes/${docenteId}/materias/`).pipe(
-      map(r => r.data ?? r)
+    // Las materias están embebidas en la respuesta del docente de ms-docentes.
+    // ms-periodos-materias usa docente_id como hash SHA1 del nombre (incompatible).
+    return this.http.get<any>(`${this.base}/docentes/`).pipe(
+      map((r: any) => {
+        const list: any[] = r.data?.results ?? r.results ?? r.data ?? r;
+        const docente = list.find((d: any) => d.id === docenteId);
+        if (!docente?.materias) return [];
+        return docente.materias.map((m: any) => ({
+          id: m.id,
+          nrc: m.nrc,
+          nombre: m.nombre_materia ?? m.nombre ?? `NRC ${m.nrc}`,
+          seccion: m.seccion ?? '',
+          clave: m.clave ?? '',
+          horario: m.horario ?? '',
+          periodo_id: 0,
+          activo: true,
+        }));
+      })
     );
   }
 

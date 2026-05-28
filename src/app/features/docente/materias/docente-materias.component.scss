@@ -1,0 +1,121 @@
+.page {
+  padding: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #1565c0;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.empty-card {
+  mat-card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px;
+    color: #666;
+  }
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    color: #bbb;
+  }
+}
+
+.materia-panel {
+  margin-bottom: 12px;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1) !important;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  .mat-icon-sm { font-size: 20px; width: 20px; height: 20px; color: #1565c0; }
+  .nombre { font-size: 1rem; }
+}
+
+.panel-desc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nrc-badge, .sec-badge {
+  font-size: 0.8rem;
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.chip-activo { --mdc-chip-label-text-color: #2e7d32; background: #e8f5e9 !important; }
+.chip-cerrado { --mdc-chip-label-text-color: #c62828; background: #ffebee !important; }
+.chip-baja    { --mdc-chip-label-text-color: #e65100; background: #fff3e0 !important; }
+
+.panel-body {
+  padding-top: 8px;
+}
+
+.acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.btn-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border: 1px solid #1565c0;
+  border-radius: 4px;
+  color: #1565c0;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+  &:hover { background: #e3f2fd; }
+  &.disabled { opacity: 0.6; cursor: default; }
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+}
+
+.no-alumnos {
+  color: #888;
+  font-style: italic;
+  padding: 12px 0;
+}
+
+.alumnos-count {
+  font-size: 0.85rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.alumnos-table {
+  width: 100%;
+  th { font-weight: 600; color: #333; }
+  td, th { padding: 10px 16px; }
+  tr:hover td { background: #f5f5f5; }
+}

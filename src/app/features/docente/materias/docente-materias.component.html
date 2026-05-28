@@ -1,0 +1,95 @@
+<div class="page">
+  <h2 class="page-title">Mis Materias</h2>
+
+  @if (loading()) {
+    <div class="center"><mat-spinner /></div>
+  } @else if (estados().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <mat-icon class="empty-icon">menu_book</mat-icon>
+        <p>No tienes materias asignadas en el periodo activo.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <mat-accordion multi>
+      @for (est of estados(); track est.materia.id; let i = $index) {
+        <mat-expansion-panel (opened)="expandir(i)" class="materia-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title class="panel-title">
+              <mat-icon class="mat-icon-sm">menu_book</mat-icon>
+              <span class="nombre">{{ est.materia.nombre }}</span>
+            </mat-panel-title>
+            <mat-panel-description class="panel-desc">
+              <span class="nrc-badge">NRC: {{ est.materia.nrc }}</span>
+              @if (est.materia.seccion) {
+                <span class="sec-badge">Sección: {{ est.materia.seccion }}</span>
+              }
+              <mat-chip [class]="est.materia.activo !== false ? 'chip-activo' : 'chip-cerrado'">
+                {{ est.materia.activo !== false ? 'Activa' : 'Cerrada' }}
+              </mat-chip>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+
+          <div class="panel-body">
+            <!-- Acciones -->
+            <div class="acciones">
+              <label class="btn-upload" [class.disabled]="importando() === i">
+                @if (importando() === i) {
+                  <mat-spinner diameter="18" />
+                } @else {
+                  <mat-icon>upload_file</mat-icon>
+                }
+                Importar PDF de alumnos
+                <input type="file" accept=".pdf" hidden (change)="importarPdf(i, $event)" [disabled]="importando() === i">
+              </label>
+
+              @if (est.materia.activo !== false) {
+                <button mat-stroked-button color="warn" (click)="cerrarMateria(i)"
+                        [disabled]="cerrando() === i"
+                        matTooltip="Cierra la materia y notifica a los alumnos">
+                  @if (cerrando() === i) { <mat-spinner diameter="18" /> } @else { <mat-icon>lock</mat-icon> }
+                  Cerrar materia
+                </button>
+              }
+            </div>
+
+            <!-- Tabla de alumnos -->
+            @if (est.loadingAlumnos) {
+              <div class="center"><mat-spinner diameter="32" /></div>
+            } @else if (est.alumnos.length === 0) {
+              <p class="no-alumnos">Sin alumnos registrados. Importa el PDF de lista de clase.</p>
+            } @else {
+              <p class="alumnos-count">{{ est.alumnos.length }} alumno(s) inscrito(s)</p>
+              <div class="table-wrap">
+                <table mat-table [dataSource]="est.alumnos" class="alumnos-table">
+                  <ng-container matColumnDef="matricula">
+                    <th mat-header-cell *matHeaderCellDef>Matrícula</th>
+                    <td mat-cell *matCellDef="let a">{{ a.matricula }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="nombre">
+                    <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                    <td mat-cell *matCellDef="let a">{{ a.nombre }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="email">
+                    <th mat-header-cell *matHeaderCellDef>Correo</th>
+                    <td mat-cell *matCellDef="let a">{{ a.email }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="activo">
+                    <th mat-header-cell *matHeaderCellDef>Estado</th>
+                    <td mat-cell *matCellDef="let a">
+                      <mat-chip [class]="a.activo !== false ? 'chip-activo' : 'chip-baja'">
+                        {{ a.activo !== false ? 'Activo' : 'Baja' }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columnas;"></tr>
+                </table>
+              </div>
+            }
+          </div>
+        </mat-expansion-panel>
+      }
+    </mat-accordion>
+  }
+</div>

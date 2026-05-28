@@ -22,9 +22,11 @@ import { AuthService } from '../../../core/services/auth.service';
 export class DocenteLayoutComponent {
   auth = inject(AuthService);
   nav = [
-    { label: 'Dashboard',     icon: 'dashboard',    path: 'dashboard'      },
-    { label: 'Asistencias QR',icon: 'qr_code_scanner', path: 'asistencias' },
-    { label: 'Reportes',      icon: 'bar_chart',    path: 'reportes'       },
+    { label: 'Dashboard',      icon: 'dashboard',       path: 'dashboard'      },
+    { label: 'Materias',       icon: 'menu_book',        path: 'materias'       },
+    { label: 'Calificaciones', icon: 'grade',            path: 'calificaciones' },
+    { label: 'Asistencias QR', icon: 'qr_code_scanner',  path: 'asistencias'   },
+    { label: 'Reportes',       icon: 'bar_chart',        path: 'reportes'       },
   ];
   private bp = inject(BreakpointObserver);
   isMobile = toSignal(this.bp.observe(Breakpoints.Handset).pipe(map(r => r.matches)), { initialValue: false });

@@ -1,0 +1,216 @@
+<div class="page">
+  <h2 class="page-title">Calificaciones</h2>
+
+  @if (loadingMaterias()) {
+    <div class="center"><mat-spinner /></div>
+  } @else if (materias().length === 0) {
+    <mat-card class="empty-card">
+      <mat-card-content>
+        <mat-icon class="empty-icon">grade</mat-icon>
+        <p>No tienes materias asignadas en el periodo activo.</p>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <!-- Selector de materia -->
+    <mat-card class="selector-card">
+      <mat-card-content>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Selecciona una materia</mat-label>
+          <mat-select (selectionChange)="onMateriaChange($event.value)">
+            @for (m of materias(); track m.id) {
+              <mat-option [value]="m">{{ m.nombre }} — NRC: {{ m.nrc }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    @if (selectedMateria()) {
+      @if (loadingPond()) {
+        <div class="center"><mat-spinner /></div>
+      } @else if (actividades().length === 0) {
+        <!-- Sin ponderaciones: formulario de configuración -->
+        <mat-card class="config-card">
+          <mat-card-header>
+            <mat-card-title>Configurar Ponderaciones</mat-card-title>
+            <mat-card-subtitle>Define las categorías de evaluación. La suma debe ser exactamente 100%.</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <form [formGroup]="formPonderaciones" (ngSubmit)="guardarPonderaciones()">
+              <div formArrayName="filas">
+                @for (fila of filas.controls; track $index; let i = $index) {
+                  <div [formGroupName]="i" class="fila-pond">
+                    <mat-form-field appearance="outline" class="campo-nombre">
+                      <mat-label>Nombre (ej. Exámenes)</mat-label>
+                      <input matInput formControlName="nombre" placeholder="Exámenes Parciales">
+                      @if (fila.get('nombre')?.invalid && fila.get('nombre')?.touched) {
+                        <mat-error>Campo requerido</mat-error>
+                      }
+                    </mat-form-field>
+                    <mat-form-field appearance="outline" class="campo-pond">
+                      <mat-label>% Ponderación</mat-label>
+                      <input matInput type="number" formControlName="ponderacion"
+                             min="1" max="100" (input)="calcularSuma()">
+                      <span matSuffix>%</span>
+                      @if (fila.get('ponderacion')?.invalid && fila.get('ponderacion')?.touched) {
+                        <mat-error>Entre 1 y 100</mat-error>
+                      }
+                    </mat-form-field>
+                    @if (filas.length > 1) {
+                      <button mat-icon-button type="button" color="warn" (click)="eliminarFila(i)"
+                              matTooltip="Eliminar fila">
+                        <mat-icon>remove_circle</mat-icon>
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div class="suma-row">
+                <button mat-stroked-button type="button" (click)="agregarFila()">
+                  <mat-icon>add</mat-icon> Agregar categoría
+                </button>
+                <span [class]="sumaPonderacion() === 100 ? 'suma-ok' : 'suma-error'">
+                  Total: {{ sumaPonderacion() }}%
+                  {{ sumaPonderacion() === 100 ? '✓' : '(debe ser 100%)' }}
+                </span>
+              </div>
+
+              <button mat-raised-button color="primary" type="submit"
+                      [disabled]="guardandoPond() || sumaPonderacion() !== 100">
+                @if (guardandoPond()) { <mat-spinner diameter="20" /> } @else { <mat-icon>save</mat-icon> }
+                Guardar ponderaciones
+              </button>
+            </form>
+          </mat-card-content>
+        </mat-card>
+      } @else {
+        <!-- Con ponderaciones: tabs de gestión -->
+        <mat-tab-group animationDuration="200ms" (selectedTabChange)="$event.index === 1 && cargarConcentrado()">
+          <!-- Tab: Actividades / Calificaciones -->
+          <mat-tab label="Actividades y Calificaciones">
+            <div class="tab-content">
+              <!-- Tabla de actividades -->
+              <mat-card class="inner-card">
+                <mat-card-header>
+                  <mat-card-title>Actividades configuradas</mat-card-title>
+                  <mat-card-subtitle>Total ponderado: {{ sumaPonderacion() }}%</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <table mat-table [dataSource]="actividades()" class="full-table">
+                    <ng-container matColumnDef="nombre">
+                      <th mat-header-cell *matHeaderCellDef>Actividad</th>
+                      <td mat-cell *matCellDef="let a">{{ a.nombre }}</td>
+                    </ng-container>
+                    <ng-container matColumnDef="ponderacion">
+                      <th mat-header-cell *matHeaderCellDef>Ponderación</th>
+                      <td mat-cell *matCellDef="let a">
+                        <mat-chip class="pond-chip">{{ a.ponderacion }}%</mat-chip>
+                      </td>
+                    </ng-container>
+                    <ng-container matColumnDef="acciones">
+                      <th mat-header-cell *matHeaderCellDef>Importar Excel</th>
+                      <td mat-cell *matCellDef="let a; let i = index">
+                        <label class="btn-import" [class.disabled]="importandoCalif() === i">
+                          @if (importandoCalif() === i) {
+                            <mat-spinner diameter="16" />
+                          } @else {
+                            <mat-icon>upload</mat-icon>
+                          }
+                          Excel
+                          <input type="file" accept=".xls,.xlsx" hidden
+                                 (change)="importarExcel(a.id, $event)"
+                                 [disabled]="importandoCalif() === i">
+                        </label>
+                      </td>
+                    </ng-container>
+                    <tr mat-header-row *matHeaderRowDef="colActividades"></tr>
+                    <tr mat-row *matRowDef="let row; columns: colActividades;"></tr>
+                  </table>
+                </mat-card-content>
+              </mat-card>
+
+              <!-- Formulario para registrar calificación individual -->
+              <mat-card class="inner-card">
+                <mat-card-header><mat-card-title>Registrar calificación individual</mat-card-title></mat-card-header>
+                <mat-card-content>
+                  <form [formGroup]="formCalif" (ngSubmit)="registrarCalificacion()" class="form-calif">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Actividad</mat-label>
+                      <mat-select formControlName="actividad_id">
+                        @for (a of actividades(); track a.id) {
+                          <mat-option [value]="a.id">{{ a.nombre }} ({{ a.ponderacion }}%)</mat-option>
+                        }
+                      </mat-select>
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Matrícula del alumno</mat-label>
+                      <input matInput formControlName="alumno_id" placeholder="202312345">
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Calificación (0-100)</mat-label>
+                      <input matInput type="number" formControlName="valor" min="0" max="100">
+                    </mat-form-field>
+                    <button mat-raised-button color="primary" type="submit"
+                            [disabled]="formCalif.invalid || guardandoCalif() !== null">
+                      @if (guardandoCalif() !== null) { <mat-spinner diameter="20" /> } @else { <mat-icon>save</mat-icon> }
+                      Guardar
+                    </button>
+                  </form>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </mat-tab>
+
+          <!-- Tab: Concentrado -->
+          <mat-tab label="Concentrado final">
+            <div class="tab-content">
+              @if (loadingConc()) {
+                <div class="center"><mat-spinner /></div>
+              } @else if (concentrado().length === 0) {
+                <mat-card class="empty-card">
+                  <mat-card-content>
+                    <mat-icon class="empty-icon">assignment</mat-icon>
+                    <p>Sin calificaciones registradas aún.</p>
+                    <p class="hint">Registra calificaciones en la pestaña "Actividades" o importa un Excel.</p>
+                  </mat-card-content>
+                </mat-card>
+              } @else {
+                <mat-card class="inner-card">
+                  <mat-card-header>
+                    <mat-card-title>Concentrado de calificaciones</mat-card-title>
+                    <mat-card-subtitle>{{ concentrado().length }} alumno(s)</mat-card-subtitle>
+                  </mat-card-header>
+                  <mat-card-content>
+                    <div class="table-wrap">
+                      <table mat-table [dataSource]="concentrado()" class="full-table">
+                        <ng-container matColumnDef="alumno_id">
+                          <th mat-header-cell *matHeaderCellDef>Matrícula</th>
+                          <td mat-cell *matCellDef="let r">{{ r.alumno_id }}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="promedio_exacto">
+                          <th mat-header-cell *matHeaderCellDef>Promedio exacto</th>
+                          <td mat-cell *matCellDef="let r">{{ r.promedio_exacto | number:'1.2-2' }}</td>
+                        </ng-container>
+                        <ng-container matColumnDef="promedio_redondeado">
+                          <th mat-header-cell *matHeaderCellDef>Promedio redondeado</th>
+                          <td mat-cell *matCellDef="let r">
+                            <strong [class]="r.promedio_redondeado >= 60 ? 'aprobado' : 'reprobado'">
+                              {{ r.promedio_redondeado }}
+                            </strong>
+                          </td>
+                        </ng-container>
+                        <tr mat-header-row *matHeaderRowDef="colConcentrado"></tr>
+                        <tr mat-row *matRowDef="let row; columns: colConcentrado;"></tr>
+                      </table>
+                    </div>
+                  </mat-card-content>
+                </mat-card>
+              }
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      }
+    }
+  }
+</div>
