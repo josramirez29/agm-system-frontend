@@ -17,6 +17,7 @@ const NAV = [
   { label: 'Materias',   icon: 'menu_book',    path: 'materias'   },
   { label: 'Docentes',   icon: 'person_pin',   path: 'docentes'   },
   { label: 'Alumnos',    icon: 'groups',       path: 'alumnos'    },
+  { label: 'Reportes',   icon: 'description',  path: 'reportes'   },
 ];
 
 @Component({

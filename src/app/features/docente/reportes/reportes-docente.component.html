@@ -1,0 +1,152 @@
+<div class="reportes-docente-container">
+  <h1>Reportes y Estadísticas</h1>
+
+  <mat-tab-group>
+    <!-- TAB 1: Mis Materias -->
+    <mat-tab label="Mis Materias">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Materias Asignadas</mat-card-title>
+            <mat-card-subtitle>Genera reportes de tus materias</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngIf="loading()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando materias...</p>
+            </div>
+
+            <div *ngIf="!loading() && materiasList().length === 0" class="empty-state">
+              <mat-icon>school</mat-icon>
+              <p>No tienes materias asignadas</p>
+            </div>
+
+            <div *ngIf="!loading() && materiasList().length > 0" class="materias-grid">
+              <mat-card *ngFor="let materia of materiasList()" class="materia-card">
+                <mat-card-header>
+                  <mat-card-title>{{ materia.nombre }}</mat-card-title>
+                  <mat-card-subtitle>NRC: {{ materia.nrc }}</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                  <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="descargarReporte(materia.id, 'calificaciones', 'pdf')">
+                      <mat-icon>picture_as_pdf</mat-icon>
+                      Calificaciones PDF
+                    </button>
+                    <button mat-raised-button color="accent" (click)="descargarReporte(materia.id, 'calificaciones', 'xls')">
+                      <mat-icon>table_chart</mat-icon>
+                      Calificaciones Excel
+                    </button>
+                  </div>
+                  <div class="button-group">
+                    <button mat-raised-button color="primary" (click)="descargarReporte(materia.id, 'asistencias', 'pdf')">
+                      <mat-icon>picture_as_pdf</mat-icon>
+                      Asistencias PDF
+                    </button>
+                    <button mat-raised-button color="accent" (click)="descargarReporte(materia.id, 'asistencias', 'xls')">
+                      <mat-icon>table_chart</mat-icon>
+                      Asistencias Excel
+                    </button>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- TAB 2: Estadísticas -->
+    <mat-tab label="Estadísticas de Materias">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Estadísticas por Materia</mat-card-title>
+            <mat-card-subtitle>Desempeño de tus materias en diferentes períodos</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngIf="loadingEstadisticas()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando estadísticas...</p>
+            </div>
+
+            <div *ngIf="!loadingEstadisticas() && estadisticasList().length === 0" class="empty-state">
+              <mat-icon>assessment</mat-icon>
+              <p>No hay estadísticas registradas</p>
+            </div>
+
+            <div *ngIf="!loadingEstadisticas() && estadisticasList().length > 0">
+              <div class="table-responsive">
+                <table mat-table [dataSource]="estadisticasList()" class="estadisticas-table">
+                  <!-- Materia -->
+                  <ng-container matColumnDef="materia_nombre">
+                    <th mat-header-cell *matHeaderCellDef>Materia</th>
+                    <td mat-cell *matCellDef="let element">{{ element.materia_nombre }}</td>
+                  </ng-container>
+
+                  <!-- Período -->
+                  <ng-container matColumnDef="periodo_nombre">
+                    <th mat-header-cell *matHeaderCellDef>Período</th>
+                    <td mat-cell *matCellDef="let element">{{ element.periodo_nombre }}</td>
+                  </ng-container>
+
+                  <!-- Total Alumnos -->
+                  <ng-container matColumnDef="total_alumnos">
+                    <th mat-header-cell *matHeaderCellDef>Total Alumnos</th>
+                    <td mat-cell *matCellDef="let element">{{ element.total_alumnos }}</td>
+                  </ng-container>
+
+                  <!-- Promedio General -->
+                  <ng-container matColumnDef="promedio_general">
+                    <th mat-header-cell *matHeaderCellDef>Promedio General</th>
+                    <td mat-cell *matCellDef="let element">
+                      <div class="progress-inline">
+                        <mat-progress-bar mode="determinate"
+                                        [value]="element.promedio_general"
+                                        [ngClass]="{'high': element.promedio_general >= 80, 'medium': element.promedio_general >= 60 && element.promedio_general < 80, 'low': element.promedio_general < 60}">
+                        </mat-progress-bar>
+                        <span>{{ element.promedio_general.toFixed(1) }}%</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- % Aprobados -->
+                  <ng-container matColumnDef="porcentaje_aprobados">
+                    <th mat-header-cell *matHeaderCellDef>% Aprobados</th>
+                    <td mat-cell *matCellDef="let element">
+                      <div class="progress-inline">
+                        <mat-progress-bar mode="determinate"
+                                        [value]="element.porcentaje_aprobados"
+                                        [ngClass]="{'high': element.porcentaje_aprobados >= 80, 'medium': element.porcentaje_aprobados >= 60 && element.porcentaje_aprobados < 80, 'low': element.porcentaje_aprobados < 60}">
+                        </mat-progress-bar>
+                        <span>{{ element.porcentaje_aprobados.toFixed(1) }}%</span>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Fecha -->
+                  <ng-container matColumnDef="fecha_registro">
+                    <th mat-header-cell *matHeaderCellDef>Fecha Registro</th>
+                    <td mat-cell *matCellDef="let element">
+                      {{ element.fecha_registro | date: 'short' }}
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="columnasEstadisticas"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columnasEstadisticas;"></tr>
+                </table>
+              </div>
+
+              <mat-paginator
+                [length]="totalEstadisticas()"
+                [pageSize]="limiteEstadisticas()"
+                [pageSizeOptions]="[5, 10, 25]"
+                (page)="onPaginaEstadisticasChange($event)">
+              </mat-paginator>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

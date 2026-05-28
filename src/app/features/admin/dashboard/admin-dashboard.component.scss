@@ -8,6 +8,151 @@
 
 .center { display: flex; justify-content: center; padding: 3rem; }
 
+// Sistema Info Card
+.system-info-card {
+  border-radius: var(--radius-lg) !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-bottom: 20px;
+
+  .system-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    .info-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        opacity: 0.9;
+      }
+
+      .info-text {
+        display: flex;
+        flex-direction: column;
+
+        .label {
+          font-size: 12px;
+          opacity: 0.8;
+          text-transform: uppercase;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+        }
+
+        .value {
+          font-size: 16px;
+          font-weight: 600;
+          margin-top: 4px;
+        }
+      }
+    }
+  }
+}
+
+// Período Card
+.periodo-card {
+  border-radius: var(--radius-lg) !important;
+  border-left: 5px solid #4caf50;
+  margin-bottom: 24px;
+
+  &.empty {
+    border-left-color: #ff9800;
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 12px;
+      text-align: center;
+      color: #999;
+
+      mat-icon {
+        font-size: 48px;
+        width: 48px;
+        height: 48px;
+        opacity: 0.3;
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+      }
+    }
+  }
+
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    .status-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #4caf50 !important;
+      color: white !important;
+      font-weight: 600;
+      font-size: 12px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .periodo-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+
+    .detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      strong {
+        font-size: 12px;
+        color: #999;
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      span {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+
+        &.badge {
+          display: inline-block;
+          padding: 6px 12px;
+          border-radius: 20px;
+          background-color: #f0f0f0;
+          color: #666;
+          font-size: 12px;
+          font-weight: 600;
+          width: fit-content;
+
+          &.vigente {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+          }
+        }
+      }
+    }
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -18,7 +163,15 @@
   @media (max-width: 500px)  { grid-template-columns: 1fr; }
 }
 
-.stat-card { border-radius: var(--radius-lg) !important; }
+.stat-card {
+  border-radius: var(--radius-lg) !important;
+  transition: transform 0.3s, box-shadow 0.3s;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+}
 
 .stat-body { display: flex; justify-content: space-between; align-items: center; }
 
@@ -53,4 +206,52 @@
   mat-icon { font-size: 28px !important; }
 }
 
-.info-card { border-radius: var(--radius-lg) !important; }
+// Quick Access
+.quick-access-card {
+  border-radius: var(--radius-lg) !important;
+  margin-bottom: 24px;
+
+  .quick-access-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+
+    button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px !important;
+      height: auto;
+      text-transform: none;
+      font-size: 12px;
+      font-weight: 600;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+}
+
+.info-card {
+  border-radius: var(--radius-lg) !important;
+
+  ul {
+    margin: 12px 0 0 0;
+    padding-left: 24px;
+
+    li {
+      margin: 8px 0;
+      line-height: 1.6;
+      color: #555;
+
+      strong {
+        color: #333;
+      }
+    }
+  }
+}
+

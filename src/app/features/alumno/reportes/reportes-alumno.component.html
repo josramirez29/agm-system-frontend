@@ -1,0 +1,158 @@
+<div class="reportes-alumno-container">
+  <h1>Mis Estadísticas Académicas</h1>
+  <p class="subtitle">Hola, {{ nombreAlumno() }}. Aquí puedes ver tu desempeño académico</p>
+
+  <mat-tab-group>
+    <!-- TAB 1: Estadísticas por Materia -->
+    <mat-tab label="Estadísticas por Materia">
+      <div class="tab-content">
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Desempeño por Materia</mat-card-title>
+            <mat-card-subtitle>Asistencia, calificaciones y sesiones de cada materia inscrita</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngIf="loadingEstadisticas()" class="loading">
+              <mat-spinner diameter="40"></mat-spinner>
+              <p>Cargando estadísticas...</p>
+            </div>
+
+            <div *ngIf="!loadingEstadisticas() && estadisticasList().length === 0" class="empty-state">
+              <mat-icon>school</mat-icon>
+              <p>No hay estadísticas disponibles aún</p>
+            </div>
+
+            <div *ngIf="!loadingEstadisticas() && estadisticasList().length > 0" class="estadisticas-list">
+              <mat-card *ngFor="let stats of estadisticasList()" class="stats-card">
+                <mat-card-header>
+                  <div class="materia-header">
+                    <div>
+                      <mat-card-title>{{ stats.materia_nombre }}</mat-card-title>
+                      <mat-card-subtitle>{{ stats.periodo_nombre }} | NRC: {{ stats.materia_nrc }}</mat-card-subtitle>
+                    </div>
+                    <mat-chip class="fecha-chip">{{ stats.fecha_registro | date: 'MMM dd, yyyy' }}</mat-chip>
+                  </div>
+                </mat-card-header>
+
+                <mat-card-content>
+                  <div class="stats-grid">
+                    <!-- Asistencia -->
+                    <div class="stat-item">
+                      <div class="stat-label">Asistencia</div>
+                      <div class="progress-section">
+                        <mat-progress-bar mode="determinate"
+                                        [value]="stats.porcentaje_asistencia"
+                                        [ngClass]="obtenerColorAsistencia(stats.porcentaje_asistencia)">
+                        </mat-progress-bar>
+                        <div class="stat-info">
+                          <span class="percentage">{{ stats.porcentaje_asistencia.toFixed(1) }}%</span>
+                          <span class="status" [class]="'status-' + obtenerColorAsistencia(stats.porcentaje_asistencia)">
+                            {{ obtenerEstadoAsistencia(stats.porcentaje_asistencia) }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="detail-text">
+                        {{ stats.sesiones_presentes }} de {{ stats.total_sesiones }} sesiones
+                      </div>
+                    </div>
+
+                    <!-- Calificación -->
+                    <div class="stat-item">
+                      <div class="stat-label">Promedio de Calificaciones</div>
+                      <div class="progress-section">
+                        <mat-progress-bar mode="determinate"
+                                        [value]="stats.promedio_calificaciones"
+                                        [ngClass]="obtenerColorCalificacion(stats.promedio_calificaciones)">
+                        </mat-progress-bar>
+                        <div class="stat-info">
+                          <span class="percentage">{{ stats.promedio_calificaciones.toFixed(1) }}/100</span>
+                          <span class="status" [class]="'status-' + obtenerColorCalificacion(stats.promedio_calificaciones)">
+                            {{ obtenerEstadoCalificacion(stats.promedio_calificaciones) }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+
+              <mat-paginator
+                [length]="totalEstadisticas()"
+                [pageSize]="limiteEstadisticas()"
+                [pageSizeOptions]="[5, 10, 25]"
+                (page)="onPaginaEstadisticasChange($event)">
+              </mat-paginator>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- TAB 2: Resumen General -->
+    <mat-tab label="Resumen General">
+      <div class="tab-content">
+        <mat-card class="summary-card">
+          <mat-card-header>
+            <mat-card-title>Resumen de tu Desempeño Académico</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div *ngIf="estadisticasList().length > 0; else noData" class="summary-content">
+              <div class="summary-item">
+                <mat-icon>school</mat-icon>
+                <div class="info">
+                  <span class="label">Total de Materias Inscritas</span>
+                  <span class="value">{{ estadisticasList().length }}</span>
+                </div>
+              </div>
+
+              <div class="summary-item">
+                <mat-icon>trending_up</mat-icon>
+                <div class="info">
+                  <span class="label">Promedio General de Asistencia</span>
+                  <span class="value">{{ promedioAsistencia() }}%</span>
+                </div>
+              </div>
+
+              <div class="summary-item">
+                <mat-icon>assessment</mat-icon>
+                <div class="info">
+                  <span class="label">Promedio General de Calificaciones</span>
+                  <span class="value">{{ promedioCalificaciones() }}/100</span>
+                </div>
+              </div>
+
+              <div class="summary-item">
+                <mat-icon>check_circle</mat-icon>
+                <div class="info">
+                  <span class="label">Total de Sesiones Asistidas</span>
+                  <span class="value">{{ totalSesionesPresentes() }} sesiones</span>
+                </div>
+              </div>
+            </div>
+
+            <ng-template #noData>
+              <div class="empty-state">
+                <mat-icon>info</mat-icon>
+                <p>Aún no hay estadísticas disponibles</p>
+              </div>
+            </ng-template>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="info-card">
+          <mat-card-header>
+            <mat-card-title>Información Importante</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <ul>
+              <li><strong>Asistencia:</strong> La asistencia regular es fundamental para tu éxito académico. Procura mantener una asistencia mayor al 80%.</li>
+              <li><strong>Calificaciones:</strong> Tu promedio se calcula basándose en todas tus evaluaciones. Trabaja para mantener un promedio superior a 70 puntos.</li>
+              <li><strong>Períodos:</strong> Las estadísticas se actualizan al cierre de cada período académico.</li>
+              <li><strong>Reportes:</strong> Puedes descargar reportes detallados contactando a tu docente o al administrador del sistema.</li>
+            </ul>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>
