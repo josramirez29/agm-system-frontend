@@ -44,6 +44,7 @@
               <zxing-scanner
                 [enable]="scanning()"
                 (scanSuccess)="onQrScanned($event)"
+                (scanError)="onScanError($event)"
                 [formats]="allowedFormats">
               </zxing-scanner>
             </div>
@@ -51,6 +52,15 @@
               <div class="last-scan">
                 <mat-icon>check_circle</mat-icon> Último: {{ lastScanned() }}
               </div>
+            }
+            @if (cameraError()) {
+              <div class="last-scan snack-error">
+                <mat-icon>videocam_off</mat-icon> {{ cameraError() }}
+              </div>
+              <button mat-stroked-button type="button" (click)="reintentarCamara()">
+                <mat-icon>refresh</mat-icon>
+                Reintentar cámara
+              </button>
             }
           }
         </mat-card-content>

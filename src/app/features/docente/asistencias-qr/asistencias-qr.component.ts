@@ -18,7 +18,7 @@ import { DocentesService } from '../../../core/services/docentes.service';
 import { AsistenciasService } from '../../../core/services/asistencias.service';
 import { Materia, Asistencia } from '../../../core/models';
 import { interval, Subscription } from 'rxjs';
-import { switchMap, catchError, of } from 'rxjs';
+import { switchMap, catchError, of, finalize } from 'rxjs';
 
 @Component({
   selector: 'app-asistencias-qr',
@@ -45,6 +45,8 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
   materias      = signal<Materia[]>([]);
   asistencias   = signal<Asistencia[]>([]);
   lastScanned   = signal<string>('');
+  cameraError   = signal<string | null>(null);
+  registering   = signal(false);
 
   displayedColumns = ['alumno_nombre', 'alumno_matricula', 'timestamp'];
   allowedFormats  = [BarcodeFormat.QR_CODE];
@@ -55,6 +57,7 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
   });
 
   private pollSub?: Subscription;
+  private scanErrorHandled = false;
 
   ngOnInit() {
     const email = this.auth.currentUser()?.email ?? '';
@@ -71,41 +74,79 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
 
   iniciarSesion() {
     if (this.form.invalid || !this.docenteId()) return;
+    if (!this.auth.isAuthenticated()) {
+      this.snack.open('Tu sesión expiró. Vuelve a iniciar sesión.', '', { duration: 3500, panelClass: 'snack-error' });
+      this.auth.logout();
+      return;
+    }
+    this.cameraError.set(null);
+    this.scanErrorHandled = false;
     this.loading.set(true);
     this.asistSvc.iniciarSesion({
       materia_id: Number(this.form.value.materia_id),
       docente_id: this.docenteId()!
     }).subscribe({
       next: res => {
-        this.sesionActiva.set(res);
+        const sesionId = res?.data?.sesion_id ?? res?.sesion_id ?? res?.id;
+        if (!sesionId) {
+          this.loading.set(false);
+          this.snack.open('La respuesta no incluyó sesion_id', '', { duration: 3000, panelClass: 'snack-error' });
+          return;
+        }
+
+        this.sesionActiva.set({
+          ...res,
+          id: sesionId,
+          materia_id: Number(this.form.value.materia_id)
+        });
         this.loading.set(false);
         this.scanning.set(true);
         this.startPoll();
+        this.loadAsistencias();
         this.snack.open('Sesión iniciada — apunta la cámara al QR del alumno', '', { duration: 4000 });
       },
-      error: () => { this.loading.set(false); this.snack.open('Error al iniciar sesión', '', { duration: 3000, panelClass: 'snack-error' }); }
+      error: err => {
+        this.loading.set(false);
+        this.scanning.set(false);
+        if (err?.status === 401) {
+          this.snack.open('Tu sesión expiró. Vuelve a iniciar sesión.', '', { duration: 3500, panelClass: 'snack-error' });
+          this.auth.logout();
+          return;
+        }
+        this.snack.open('Error al iniciar sesión', '', { duration: 3000, panelClass: 'snack-error' });
+      }
     });
   }
 
   onQrScanned(result: string) {
-    if (!result || result === this.lastScanned() || !this.sesionActiva()) return;
+    const sesion = this.sesionActiva();
+    if (!result || result === this.lastScanned() || !sesion?.id || this.registering()) return;
     this.lastScanned.set(result);
 
-    let alumnoId: number;
+    let alumnoId: number | null = null;
+    let tokenQr = result;
     try {
       const payload = JSON.parse(result);
-      alumnoId = payload.alumno_id ?? payload.id;
+      alumnoId = payload.alumno_id ?? payload.id ?? null;
+      tokenQr = payload.token_qr ?? result;
     } catch {
-      const num = parseInt(result, 10);
-      if (isNaN(num)) { this.snack.open('QR inválido', '', { duration: 2000 }); return; }
-      alumnoId = num;
+      // Se conserva el resultado crudo como token si el QR no viene en JSON.
     }
 
+    if (!alumnoId) {
+      this.snack.open('QR inválido: faltan datos del alumno', '', { duration: 2500, panelClass: 'snack-error' });
+      setTimeout(() => this.lastScanned.set(''), 2000);
+      return;
+    }
+
+    this.registering.set(true);
     this.asistSvc.registrarAsistencia({
-      sesion_id: this.sesionActiva().id,
+      materia_id: sesion.materia_id,
       alumno_id: alumnoId,
-      token: `${this.sesionActiva().id}_${alumnoId}_${Date.now()}`
-    }).subscribe({
+      token_qr: tokenQr
+    }).pipe(
+      finalize(() => this.registering.set(false))
+    ).subscribe({
       next: () => {
         this.snack.open(`✓ Alumno #${alumnoId} registrado`, '', { duration: 2000 });
         this.loadAsistencias();
@@ -120,10 +161,19 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
   }
 
   cerrarSesion() {
-    if (!this.sesionActiva()) return;
-    this.asistSvc.cerrarSesion(this.sesionActiva().id).subscribe({
+    const sesion = this.sesionActiva();
+    if (!sesion) return;
+    const materiaId = sesion?.materia_id;
+    if (materiaId === undefined || materiaId === null) {
+      this.snack.open('No se encontró el materia_id de la sesión activa', '', { duration: 3000, panelClass: 'snack-error' });
+      return;
+    }
+
+    this.asistSvc.cerrarSesion(materiaId).subscribe({
       next: () => {
         this.scanning.set(false);
+        this.cameraError.set(null);
+        this.scanErrorHandled = false;
         this.sesionActiva.set(null);
         this.stopPoll();
         this.snack.open('Sesión cerrada', '', { duration: 2500 });
@@ -133,8 +183,9 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
   }
 
   private loadAsistencias() {
-    if (!this.sesionActiva()) return;
-    this.asistSvc.getAsistenciasBySesion(this.sesionActiva().id).subscribe(r => {
+    const sesion = this.sesionActiva();
+    if (!sesion?.materia_id) return;
+    this.asistSvc.getAsistenciasByMateria(sesion.materia_id).subscribe(r => {
       const list: Asistencia[] = Array.isArray(r) ? r : [];
       this.asistencias.set(list);
       this.dataSource.data = list;
@@ -146,6 +197,27 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
   }
 
   private stopPoll() { this.pollSub?.unsubscribe(); }
+
+  onScanError(error: unknown) {
+    if (this.scanErrorHandled) return;
+
+    const message = error instanceof Error ? error.message : String(error ?? 'Error desconocido');
+    if (/No scanning is running at the time/i.test(message)) {
+      return;
+    }
+
+    this.scanErrorHandled = true;
+    this.cameraError.set(message);
+    this.snack.open(`No se pudo iniciar la cámara: ${message}`, '', { duration: 4000, panelClass: 'snack-error' });
+  }
+
+  reintentarCamara() {
+    if (!this.sesionActiva()) return;
+    this.cameraError.set(null);
+    this.scanErrorHandled = false;
+    this.scanning.set(false);
+    setTimeout(() => this.scanning.set(true));
+  }
 
   ngOnDestroy() { this.stopPoll(); }
 }

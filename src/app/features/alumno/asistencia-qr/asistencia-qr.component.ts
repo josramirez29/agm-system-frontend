@@ -12,6 +12,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { AuthService } from '../../../core/services/auth.service';
 import { AlumnosService } from '../../../core/services/alumnos.service';
+import { AsistenciasService } from '../../../core/services/asistencias.service';
+import { MateriasService } from '../../../core/services/materias.service';
+import { forkJoin, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-asistencia-qr',
@@ -27,11 +30,15 @@ import { AlumnosService } from '../../../core/services/alumnos.service';
 export class AsistenciaQrComponent implements OnInit {
   private auth      = inject(AuthService);
   private alumnoSvc = inject(AlumnosService);
+  private materiaSvc = inject(MateriasService);
+  private asistSvc  = inject(AsistenciasService);
   private snack     = inject(MatSnackBar);
   private fb        = inject(FormBuilder);
 
   alumnoId   = signal<number | null>(null);
   matricula  = signal<string>('');
+  nrc        = signal<string>('');
+  materiaId  = signal<number | null>(null);
   qrData     = signal<string>('');
   loading    = signal(false);
   configured = signal(false);
@@ -48,6 +55,8 @@ export class AsistenciaQrComponent implements OnInit {
         const data = JSON.parse(saved);
         this.alumnoId.set(data.alumnoId);
         this.matricula.set(data.matricula);
+        this.nrc.set(data.nrc ?? '');
+        this.materiaId.set(data.materiaId ?? null);
         this.configured.set(true);
         this.generateQr();
       } catch { /* ignore */ }
@@ -60,39 +69,79 @@ export class AsistenciaQrComponent implements OnInit {
     const nrc = this.setupForm.value.nrc!;
     const mat = this.setupForm.value.matricula!;
 
-    this.alumnoSvc.getByMateria(nrc).subscribe({
-      next: (r: any) => {
-        const list = Array.isArray(r) ? r : (r?.results ?? []);
-        const alumno = list.find((a: any) =>
-          a.matricula?.toLowerCase() === mat.toLowerCase()
+    forkJoin({
+      alumnos: this.alumnoSvc.getByMateria(nrc),
+      materias: this.materiaSvc.getAll(),
+    }).pipe(
+      switchMap(({ alumnos, materias }) => {
+        const list = Array.isArray(alumnos) ? alumnos : (alumnos?.results ?? []);
+        const alumno = list.find((a: any) => a.matricula?.toLowerCase() === mat.toLowerCase());
+        if (!alumno) throw new Error('Matrícula no encontrada en ese NRC');
+
+        const materiaList = Array.isArray(materias) ? materias : (materias?.results ?? []);
+        const materia = materiaList.find((m: any) => String(m.nrc) === String(nrc));
+        if (!materia) throw new Error('No se pudo resolver la materia para ese NRC');
+
+        return this.asistSvc.generarQrToken({
+          alumno_id: alumno.id,
+          materia_id: materia.id,
+        }).pipe(
+          switchMap(tokenData => {
+            const setup = {
+              alumnoId: alumno.id,
+              matricula: alumno.matricula,
+              nrc,
+              materiaId: materia.id,
+            };
+            localStorage.setItem('agm_alumno_setup', JSON.stringify(setup));
+            this.alumnoId.set(alumno.id);
+            this.matricula.set(alumno.matricula);
+            this.nrc.set(nrc);
+            this.materiaId.set(materia.id);
+            this.configured.set(true);
+            this.qrData.set(JSON.stringify({
+              token_qr: tokenData.token_qr,
+              alumno_id: alumno.id,
+              materia_id: materia.id,
+              matricula: alumno.matricula,
+              nrc,
+              ts: Date.now(),
+            }));
+            this.loading.set(false);
+            this.snack.open('QR generado correctamente', '', { duration: 2500 });
+            return [];
+          })
         );
-        if (!alumno) {
-          this.loading.set(false);
-          this.snack.open('Matrícula no encontrada en ese NRC', '', { duration: 3500, panelClass: 'snack-error' });
-          return;
-        }
-        const setup = { alumnoId: alumno.id, matricula: alumno.matricula };
-        localStorage.setItem('agm_alumno_setup', JSON.stringify(setup));
-        this.alumnoId.set(alumno.id);
-        this.matricula.set(alumno.matricula);
-        this.configured.set(true);
+      })
+    ).subscribe({
+      error: (err: any) => {
         this.loading.set(false);
-        this.generateQr();
-      },
-      error: () => {
-        this.loading.set(false);
-        this.snack.open('Error al buscar alumno', '', { duration: 3000, panelClass: 'snack-error' });
+        const msg = err?.message ?? err?.error?.detail ?? 'Error al buscar alumno o materia';
+        this.snack.open(msg, '', { duration: 3500, panelClass: 'snack-error' });
       }
     });
   }
 
   generateQr() {
-    const payload = JSON.stringify({
-      alumno_id: this.alumnoId(),
-      matricula: this.matricula(),
-      ts: Date.now()
+    if (!this.alumnoId() || !this.materiaId() || !this.nrc()) return;
+    this.asistSvc.generarQrToken({
+      alumno_id: this.alumnoId()!,
+      materia_id: this.materiaId()!,
+    }).subscribe({
+      next: tokenData => {
+        this.qrData.set(JSON.stringify({
+          token_qr: tokenData.token_qr,
+          alumno_id: this.alumnoId(),
+          materia_id: this.materiaId(),
+          matricula: this.matricula(),
+          nrc: this.nrc(),
+          ts: Date.now(),
+        }));
+      },
+      error: () => {
+        this.snack.open('No se pudo regenerar el QR', '', { duration: 3000, panelClass: 'snack-error' });
+      }
     });
-    this.qrData.set(payload);
   }
 
   resetSetup() {
@@ -100,6 +149,8 @@ export class AsistenciaQrComponent implements OnInit {
     this.configured.set(false);
     this.alumnoId.set(null);
     this.matricula.set('');
+    this.nrc.set('');
+    this.materiaId.set(null);
     this.qrData.set('');
     this.setupForm.reset();
   }
