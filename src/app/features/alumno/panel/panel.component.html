@@ -1,0 +1,44 @@
+<div class="page">
+  <h2 class="page-title">
+    @if (nombre()) { Bienvenido, {{ nombre() }} } @else { Panel del Alumno }
+  </h2>
+
+  @if (loading()) {
+    <div class="center"><mat-spinner /></div>
+  } @else if (sinRegistro()) {
+    <div class="empty-state">
+      <mat-icon>person_off</mat-icon>
+      <p>No se encontró tu registro de alumno.</p>
+      <small>Verifica que tu correo coincida con el registrado en el sistema.</small>
+    </div>
+  } @else if (materias().length === 0) {
+    <div class="empty-state">
+      <mat-icon>school</mat-icon>
+      <p>No tienes materias inscritas.</p>
+    </div>
+  } @else {
+    <p class="subtitle">
+      Tienes {{ materias().length }}
+      {{ materias().length === 1 ? 'materia inscrita' : 'materias inscritas' }} este periodo.
+    </p>
+    <div class="materias-grid">
+      @for (m of materias(); track m.nrc) {
+        <mat-card class="materia-card">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="materia-icon">class</mat-icon>
+            <mat-card-title>{{ m.nombre }}</mat-card-title>
+            <mat-card-subtitle>NRC: {{ m.nrc }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-chip-set>
+              <mat-chip [class]="m.activo ? 'chip-active' : 'chip-closed'">
+                <mat-icon matChipAvatar>{{ m.activo ? 'lock_open' : 'lock' }}</mat-icon>
+                {{ m.activo ? 'Activa' : 'Cerrada' }}
+              </mat-chip>
+            </mat-chip-set>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

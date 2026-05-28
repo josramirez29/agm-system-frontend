@@ -59,8 +59,9 @@ export class ResetPasswordComponent implements OnInit {
       },
       error: err => {
         this.loading.set(false);
-        const msg = err.error?.detail ?? 'El enlace expiró o es inválido.';
-        this.snack.open(msg, 'Cerrar', { duration: 4000, panelClass: 'snack-error' });
+        const raw = err.error?.detail ?? err.error?.message ?? err.error ?? 'El enlace expiró o es inválido.';
+        const msg = typeof raw === 'string' ? raw : Object.values(raw as object).flat().join(' ');
+        this.snack.open(msg || 'Error al actualizar contraseña.', 'Cerrar', { duration: 4000, panelClass: 'snack-error' });
       }
     });
   }

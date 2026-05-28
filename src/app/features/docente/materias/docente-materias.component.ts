@@ -14,6 +14,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { DocentesService } from '../../../core/services/docentes.service';
 import { AlumnosService } from '../../../core/services/alumnos.service';
 import { MateriasService } from '../../../core/services/materias.service';
+import { ReportesService } from '../../../core/services/reportes.service';
 import { Materia } from '../../../core/models';
 import { switchMap, catchError, of } from 'rxjs';
 
@@ -44,24 +45,27 @@ interface MateriaState {
   styleUrls: ['./docente-materias.component.scss']
 })
 export class DocenteMateriasComponent implements OnInit {
-  private auth       = inject(AuthService);
-  private docenteSvc = inject(DocentesService);
-  private alumnosSvc = inject(AlumnosService);
+  private auth        = inject(AuthService);
+  private docenteSvc  = inject(DocentesService);
+  private alumnosSvc  = inject(AlumnosService);
   private materiasSvc = inject(MateriasService);
-  private snack      = inject(MatSnackBar);
-  private dialog     = inject(MatDialog);
+  private reporteSvc  = inject(ReportesService);
+  private snack       = inject(MatSnackBar);
+  private dialog      = inject(MatDialog);
 
-  loading  = signal(true);
-  estados  = signal<MateriaState[]>([]);
-  columnas = ['matricula', 'nombre', 'email', 'activo'];
+  loading    = signal(true);
+  estados    = signal<MateriaState[]>([]);
+  columnas   = ['matricula', 'nombre', 'email', 'activo'];
   importando = signal<number | null>(null);
   cerrando   = signal<number | null>(null);
+  docenteId  = signal<number | null>(null);
 
   ngOnInit() {
     const email = this.auth.currentUser()?.email ?? '';
     this.docenteSvc.getByEmail(email).pipe(
       switchMap(docente => {
         if (!docente) return of([]);
+        this.docenteId.set(docente.id);
         return this.docenteSvc.getMateriasByDocente(docente.id).pipe(catchError(() => of([])));
       }),
       catchError(() => of([]))
@@ -114,17 +118,21 @@ export class DocenteMateriasComponent implements OnInit {
     const est = this.estados()[idx];
     if (!confirm(`¿Cerrar la materia "${est.materia.nombre}" (NRC: ${est.materia.nrc})? Esta acción notificará a todos los alumnos inscritos.`)) return;
     this.cerrando.set(idx);
-    this.materiasSvc.cerrarPorNrc(est.materia.nrc).pipe(catchError(err => {
-      const msg = err.error?.detail ?? 'Error al cerrar materia';
-      this.snack.open(msg, 'OK', { duration: 5000 });
-      return of(null);
-    })).subscribe(res => {
+    this.materiasSvc.cerrarPorNrc(est.materia.nrc).pipe(
+      catchError(err => {
+        const msg = err.error?.detail ?? 'Error al cerrar materia';
+        this.snack.open(msg, 'OK', { duration: 5000 });
+        return of(null);
+      })
+    ).subscribe(res => {
       this.cerrando.set(null);
       if (res !== null) {
         this.snack.open('Materia cerrada correctamente', 'OK', { duration: 4000 });
         const lista = [...this.estados()];
         lista[idx] = { ...lista[idx], materia: { ...lista[idx].materia, activo: false } };
         this.estados.set(lista);
+        this.reporteSvc.autoRegistrarEstadisticas(est.materia.nrc, this.docenteId())
+          .pipe(catchError(() => of(null))).subscribe();
       }
     });
   }

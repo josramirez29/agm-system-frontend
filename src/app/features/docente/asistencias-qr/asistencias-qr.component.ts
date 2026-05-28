@@ -17,7 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { DocentesService } from '../../../core/services/docentes.service';
 import { AsistenciasService } from '../../../core/services/asistencias.service';
 import { Materia, Asistencia } from '../../../core/models';
-import { interval, Subscription } from 'rxjs';
+import { interval, Subscription, forkJoin } from 'rxjs';
 import { switchMap, catchError, of, finalize } from 'rxjs';
 
 @Component({
@@ -63,12 +63,28 @@ export class AsistenciasQrComponent implements OnInit, OnDestroy {
     const email = this.auth.currentUser()?.email ?? '';
     this.docenteSvc.getByEmail(email).pipe(
       switchMap(d => {
-        if (!d) return of([]);
+        if (!d) return of(null);
         this.docenteId.set(d.id);
-        return this.docenteSvc.getMateriasByDocente(d.id).pipe(catchError(() => of([])));
-      })
-    ).subscribe(r => {
-      this.materias.set((r as any)?.results ?? r ?? []);
+        return forkJoin({
+          mats:  this.docenteSvc.getMateriasByDocente(d.id).pipe(catchError(() => of([]))),
+          sesion: this.asistSvc.getSesionActiva(d.id).pipe(catchError(() => of(null))),
+        });
+      }),
+      catchError(() => of(null))
+    ).subscribe(res => {
+      if (!res) return;
+      this.materias.set(Array.isArray(res.mats) ? res.mats as Materia[] : []);
+      const sesion = res.sesion;
+      if (sesion?.id || sesion?.sesion_id) {
+        const sesionId = sesion.id ?? sesion.sesion_id;
+        const materiaId = sesion.materia_id ?? sesion.data?.materia_id;
+        this.sesionActiva.set({ ...sesion, id: sesionId, materia_id: materiaId });
+        this.form.patchValue({ materia_id: String(materiaId) });
+        this.scanning.set(true);
+        this.startPoll();
+        this.loadAsistencias();
+        this.snack.open('Sesión activa recuperada', '', { duration: 3000 });
+      }
     });
   }
 

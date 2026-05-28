@@ -54,7 +54,7 @@ export class DocenteDashboardComponent implements OnInit {
       }),
       catchError(() => of(null))
     ).subscribe(res => {
-      const mats: Materia[] = res?.results ?? res ?? [];
+      const mats: Materia[] = (Array.isArray(res) ? res : []) as Materia[];
       this.materias.set(mats);
       this.buildCharts(mats);
     });

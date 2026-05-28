@@ -6,16 +6,31 @@
   margin-bottom: 20px;
 }
 
+.center { display: flex; justify-content: center; padding: 3rem; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  color: var(--text-4);
+
+  mat-icon {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: .5rem;
+  }
+}
+
+/* ── Selector de materia (múltiples inscritas) ── */
+
 .setup-card {
   border-radius: var(--radius-lg) !important;
   max-width: 480px;
 
   @media (max-width: 600px) { max-width: 100%; }
 }
-
-.setup-form { display: flex; flex-direction: column; gap: .75rem; padding-top: .5rem; }
-.full { width: 100%; }
-.submit-btn { height: 44px; }
 
 .card-icon {
   color: var(--blue) !important;
@@ -28,6 +43,37 @@
   background: var(--green-bg) !important;
   border-radius: 50% !important;
 }
+
+.materia-list {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  padding-top: .5rem;
+}
+
+.materia-btn {
+  width: 100%;
+  height: auto !important;
+  padding: .75rem 1rem !important;
+  display: flex !important;
+  align-items: center;
+  gap: .75rem;
+  text-align: left;
+  justify-content: flex-start !important;
+
+  mat-icon { flex-shrink: 0; color: var(--blue); }
+}
+
+.materia-btn-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.4;
+
+  strong { font-size: 14px; }
+  small  { font-size: 11px; color: var(--text-3); }
+}
+
+/* ── QR card ── */
 
 .qr-layout {
   display: grid;
@@ -62,6 +108,29 @@
 }
 
 .qr-actions { padding: 0 1rem 1rem !important; gap: .5rem; }
+
+/* ── Sin sesión activa ── */
+
+.no-sesion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  color: var(--text-3);
+
+  mat-icon {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: .5rem;
+    color: var(--amber-text);
+  }
+
+  p    { font-size: 14px; margin: .25rem 0; text-align: center; }
+  small { font-size: 12px; text-align: center; }
+}
+
+/* ── Info card ── */
 
 .info-card { border-radius: var(--radius-lg) !important; }
 

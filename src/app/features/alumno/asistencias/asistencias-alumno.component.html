@@ -1,0 +1,60 @@
+<div class="page">
+  <h2 class="page-title">Mis Asistencias</h2>
+
+  @if (loading()) {
+    <div class="center"><mat-spinner /></div>
+  } @else if (sinRegistro()) {
+    <div class="empty-state">
+      <mat-icon>person_off</mat-icon>
+      <p>No se encontró tu registro de alumno.</p>
+      <small>Verifica que tu correo coincida con el registrado en el sistema.</small>
+    </div>
+  } @else if (rows().length === 0) {
+    <div class="empty-state">
+      <mat-icon>event_busy</mat-icon>
+      <p>Aún no tienes registros de asistencia.</p>
+      <small>Usa tu QR de asistencia cuando el docente abra la sesión.</small>
+    </div>
+  } @else {
+    <mat-card>
+      <mat-card-content>
+        <div class="table-wrapper">
+          <table mat-table [dataSource]="dataSource" class="full-width">
+
+            <ng-container matColumnDef="materia_id">
+              <th mat-header-cell *matHeaderCellDef>Materia (ID)</th>
+              <td mat-cell *matCellDef="let r">{{ r.materia_id }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="presentes">
+              <th mat-header-cell *matHeaderCellDef>Presentes</th>
+              <td mat-cell *matCellDef="let r">{{ r.presentes }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="retardos">
+              <th mat-header-cell *matHeaderCellDef>Retardos</th>
+              <td mat-cell *matCellDef="let r">{{ r.retardos }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="total_sesiones">
+              <th mat-header-cell *matHeaderCellDef>Total sesiones</th>
+              <td mat-cell *matCellDef="let r">{{ r.total_sesiones }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="porcentaje">
+              <th mat-header-cell *matHeaderCellDef>% Asistencia</th>
+              <td mat-cell *matCellDef="let r">
+                <span class="pct-badge" [class.ok]="r.porcentaje >= 80" [class.warn]="r.porcentaje < 80">
+                  {{ r.porcentaje | number:'1.0-1' }}%
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns;"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

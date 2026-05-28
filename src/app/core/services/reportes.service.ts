@@ -50,6 +50,13 @@ export class ReportesService {
     );
   }
 
+  autoRegistrarEstadisticas(nrc: string, docenteId: number | null) {
+    return this.http.post<any>(
+      `${this.base}/reportes/estadisticas/auto/${nrc}`,
+      { docente_id: String(docenteId ?? '') }
+    );
+  }
+
   getEstadisticasAlumno(alumnoId: number | string, page = 1, limit = 10) {
     const params = new HttpParams().set('page', page).set('limit', limit);
     return this.http.get<any>(`${this.base}/reportes/estadisticas/alumno/${alumnoId}`, { params }).pipe(

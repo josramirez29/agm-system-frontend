@@ -9,8 +9,8 @@
         <mat-form-field appearance="outline" class="select-field">
           <mat-label>Materia</mat-label>
           <mat-select [(ngModel)]="selectedMateria" (ngModelChange)="selectedMateria.set($event)">
-            @for (m of materias(); track m.id) {
-              <mat-option [value]="m.id">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
+            @for (m of materias(); track m.nrc) {
+              <mat-option [value]="m.nrc">{{ m.nombre }} — NRC {{ m.nrc }}</mat-option>
             }
           </mat-select>
         </mat-form-field>

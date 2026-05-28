@@ -1,0 +1,56 @@
+.page-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy2);
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--text-3);
+  margin-bottom: 20px;
+}
+
+.center { display: flex; justify-content: center; padding: 3rem; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  color: var(--text-4);
+
+  mat-icon {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    margin-bottom: .5rem;
+  }
+}
+
+.materias-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.materia-card {
+  border-radius: var(--radius-lg) !important;
+
+  .materia-icon {
+    color: var(--blue) !important;
+    background: var(--blue-ghost) !important;
+    border-radius: 50% !important;
+  }
+}
+
+.chip-active {
+  background: var(--green-bg) !important;
+  color: var(--green-text) !important;
+}
+
+.chip-closed {
+  background: #fce4e4 !important;
+  color: #c62828 !important;
+}

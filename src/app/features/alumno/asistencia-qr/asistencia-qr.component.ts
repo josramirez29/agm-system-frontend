@@ -1,157 +1,134 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatDividerModule } from '@angular/material/divider';
 import { QRCodeComponent } from 'angularx-qrcode';
 import { AuthService } from '../../../core/services/auth.service';
 import { AlumnosService } from '../../../core/services/alumnos.service';
 import { AsistenciasService } from '../../../core/services/asistencias.service';
 import { MateriasService } from '../../../core/services/materias.service';
-import { forkJoin, switchMap } from 'rxjs';
+import { forkJoin, of, switchMap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+interface AlumnoRow { id: number; nombre: string; email: string; matricula: string; nrc: string; }
 
 @Component({
   selector: 'app-asistencia-qr',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatCardModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatSnackBarModule,
-    MatDividerModule, QRCodeComponent
+    CommonModule, MatCardModule, MatButtonModule, MatIconModule,
+    MatProgressSpinnerModule, MatSnackBarModule, QRCodeComponent
   ],
   templateUrl: './asistencia-qr.component.html',
   styleUrls: ['./asistencia-qr.component.scss']
 })
 export class AsistenciaQrComponent implements OnInit {
-  private auth      = inject(AuthService);
-  private alumnoSvc = inject(AlumnosService);
+  private auth       = inject(AuthService);
+  private alumnoSvc  = inject(AlumnosService);
   private materiaSvc = inject(MateriasService);
-  private asistSvc  = inject(AsistenciasService);
-  private snack     = inject(MatSnackBar);
-  private fb        = inject(FormBuilder);
+  private asistSvc   = inject(AsistenciasService);
+  private snack      = inject(MatSnackBar);
 
-  alumnoId   = signal<number | null>(null);
-  matricula  = signal<string>('');
-  nrc        = signal<string>('');
-  materiaId  = signal<number | null>(null);
-  qrData     = signal<string>('');
-  loading    = signal(false);
-  configured = signal(false);
+  loading     = signal(true);
+  generating  = signal(false);
+  sinRegistro = signal(false);
+  sinSesion   = signal(false);
 
-  setupForm = this.fb.group({
-    matricula: ['', [Validators.required, Validators.minLength(6)]],
-    nrc:       ['', [Validators.required, Validators.minLength(3)]],
-  });
+  alumnoRows   = signal<AlumnoRow[]>([]);
+  materiaNames = signal<Map<string, string>>(new Map());
+  materiaDbIds = signal<Map<string, number>>(new Map());
+  selectedRow  = signal<AlumnoRow | null>(null);
+  qrData       = signal<string>('');
 
   ngOnInit() {
-    const saved = localStorage.getItem('agm_alumno_setup');
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        this.alumnoId.set(data.alumnoId);
-        this.matricula.set(data.matricula);
-        this.nrc.set(data.nrc ?? '');
-        this.materiaId.set(data.materiaId ?? null);
-        this.configured.set(true);
-        this.generateQr();
-      } catch { /* ignore */ }
-    }
+    const email = this.auth.currentUser()?.email ?? '';
+    if (!email) { this.loading.set(false); this.sinRegistro.set(true); return; }
+
+    this.alumnoSvc.getAll(1, email).pipe(
+      switchMap((res: any) => {
+        const list: AlumnoRow[] = res?.results ?? res ?? [];
+        const rows = list.filter((a: any) => a.email?.toLowerCase() === email.toLowerCase());
+        if (!rows.length) {
+          this.sinRegistro.set(true);
+          return of(null);
+        }
+        this.alumnoRows.set(rows);
+        const nrcs = [...new Set(rows.map((r: AlumnoRow) => r.nrc))];
+        const lookups: Record<string, any> = {};
+        nrcs.forEach(nrc => {
+          lookups[nrc] = this.materiaSvc.getAll(1, 10, String(nrc)).pipe(catchError(() => of(null)));
+        });
+        return (nrcs.length ? forkJoin(lookups) : of<Record<string, any>>({})).pipe(catchError(() => of({})));
+      }),
+      catchError(() => of(null))
+    ).subscribe(results => {
+      if (results) {
+        const dbIds = new Map<string, number>();
+        const names = new Map<string, string>();
+        for (const [nrc, res] of Object.entries(results)) {
+          const mList: any[] = (res as any)?.results ?? res ?? [];
+          const m = mList.find((m: any) => String(m.nrc) === String(nrc));
+          if (m) { dbIds.set(nrc, m.id); names.set(nrc, m.nombre ?? `NRC ${nrc}`); }
+        }
+        this.materiaDbIds.set(dbIds);
+        this.materiaNames.set(names);
+
+        const rows = this.alumnoRows();
+        if (rows.length === 1) {
+          this.doSelectRow(rows[0]);
+          return;
+        }
+      }
+      this.loading.set(false);
+    });
   }
 
-  configure() {
-    if (this.setupForm.invalid) { this.setupForm.markAllAsTouched(); return; }
-    this.loading.set(true);
-    const nrc = this.setupForm.value.nrc!;
-    const mat = this.setupForm.value.matricula!;
+  selectRow(row: AlumnoRow) { this.doSelectRow(row); }
 
-    forkJoin({
-      alumnos: this.alumnoSvc.getByMateria(nrc),
-      materias: this.materiaSvc.getAll(),
-    }).pipe(
-      switchMap(({ alumnos, materias }) => {
-        const list = Array.isArray(alumnos) ? alumnos : (alumnos?.results ?? []);
-        const alumno = list.find((a: any) => a.matricula?.toLowerCase() === mat.toLowerCase());
-        if (!alumno) throw new Error('Matrícula no encontrada en ese NRC');
-
-        const materiaList = Array.isArray(materias) ? materias : (materias?.results ?? []);
-        const materia = materiaList.find((m: any) => String(m.nrc) === String(nrc));
-        if (!materia) throw new Error('No se pudo resolver la materia para ese NRC');
-
-        return this.asistSvc.generarQrToken({
-          alumno_id: alumno.id,
-          materia_id: materia.id,
-        }).pipe(
-          switchMap(tokenData => {
-            const setup = {
-              alumnoId: alumno.id,
-              matricula: alumno.matricula,
-              nrc,
-              materiaId: materia.id,
-            };
-            localStorage.setItem('agm_alumno_setup', JSON.stringify(setup));
-            this.alumnoId.set(alumno.id);
-            this.matricula.set(alumno.matricula);
-            this.nrc.set(nrc);
-            this.materiaId.set(materia.id);
-            this.configured.set(true);
-            this.qrData.set(JSON.stringify({
-              token_qr: tokenData.token_qr,
-              alumno_id: alumno.id,
-              materia_id: materia.id,
-              matricula: alumno.matricula,
-              nrc,
-              ts: Date.now(),
-            }));
-            this.loading.set(false);
-            this.snack.open('QR generado correctamente', '', { duration: 2500 });
-            return [];
-          })
-        );
-      })
-    ).subscribe({
-      error: (err: any) => {
-        this.loading.set(false);
-        const msg = err?.message ?? err?.error?.detail ?? 'Error al buscar alumno o materia';
-        this.snack.open(msg, '', { duration: 3500, panelClass: 'snack-error' });
-      }
-    });
+  private doSelectRow(row: AlumnoRow) {
+    this.selectedRow.set(row);
+    this.generateQr();
   }
 
   generateQr() {
-    if (!this.alumnoId() || !this.materiaId() || !this.nrc()) return;
-    this.asistSvc.generarQrToken({
-      alumno_id: this.alumnoId()!,
-      materia_id: this.materiaId()!,
-    }).subscribe({
+    const row = this.selectedRow();
+    if (!row) return;
+    const dbId = this.materiaDbIds().get(row.nrc);
+    if (!dbId) {
+      this.loading.set(false);
+      this.snack.open('No se encontró la materia en el sistema', '', { duration: 3500, panelClass: 'snack-error' });
+      return;
+    }
+    this.generating.set(true);
+    this.sinSesion.set(false);
+    this.asistSvc.generarQrToken({ alumno_id: row.id, materia_id: dbId }).subscribe({
       next: tokenData => {
         this.qrData.set(JSON.stringify({
           token_qr: tokenData.token_qr,
-          alumno_id: this.alumnoId(),
-          materia_id: this.materiaId(),
-          matricula: this.matricula(),
-          nrc: this.nrc(),
+          alumno_id: row.id,
+          materia_id: dbId,
+          matricula: row.matricula,
+          nrc: row.nrc,
           ts: Date.now(),
         }));
+        this.generating.set(false);
+        this.loading.set(false);
       },
-      error: () => {
-        this.snack.open('No se pudo regenerar el QR', '', { duration: 3000, panelClass: 'snack-error' });
+      error: (err: any) => {
+        this.generating.set(false);
+        this.loading.set(false);
+        if (err?.status === 404) { this.sinSesion.set(true); }
+        else { this.snack.open('Error al generar QR', '', { duration: 3500, panelClass: 'snack-error' }); }
       }
     });
   }
 
-  resetSetup() {
-    localStorage.removeItem('agm_alumno_setup');
-    this.configured.set(false);
-    this.alumnoId.set(null);
-    this.matricula.set('');
-    this.nrc.set('');
-    this.materiaId.set(null);
+  changeMateria() {
+    this.selectedRow.set(null);
     this.qrData.set('');
-    this.setupForm.reset();
+    this.sinSesion.set(false);
   }
 }

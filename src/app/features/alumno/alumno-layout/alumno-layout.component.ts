@@ -22,8 +22,10 @@ import { AuthService } from '../../../core/services/auth.service';
 export class AlumnoLayoutComponent {
   auth = inject(AuthService);
   nav = [
-    { label: 'Mi QR de Asistencia', icon: 'qr_code_2',   path: 'asistencia'     },
-    { label: 'Calificaciones',       icon: 'grade',        path: 'calificaciones' },
+    { label: 'Mis Materias',        icon: 'school',          path: 'panel'          },
+    { label: 'Mi QR de Asistencia', icon: 'qr_code_2',       path: 'asistencia'     },
+    { label: 'Calificaciones',      icon: 'grade',            path: 'calificaciones' },
+    { label: 'Mis Asistencias',     icon: 'event_available',  path: 'asistencias'    },
   ];
   private bp = inject(BreakpointObserver);
   isMobile = toSignal(this.bp.observe(Breakpoints.Handset).pipe(map(r => r.matches)), { initialValue: false });

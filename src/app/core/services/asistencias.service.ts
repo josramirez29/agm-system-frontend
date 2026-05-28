@@ -51,6 +51,12 @@ export class AsistenciasService {
     );
   }
 
+  getMisAsistencias(alumnoId: number | string) {
+    return this.http.get<any>(`${this.base}/asistencias/alumno/${alumnoId}`).pipe(
+      map(r => r.data ?? r)
+    );
+  }
+
   getEstadisticasByMateria(materiaId: number) {
     return this.http.get<any>(`${this.base}/asistencias/estadisticas/materia/${materiaId}/`).pipe(
       map(r => r.data ?? r)

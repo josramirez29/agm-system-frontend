@@ -33,7 +33,7 @@ export class DocenteReportesComponent implements OnInit {
   loadingReporte  = signal(false);
   downloading     = signal(false);
   materias        = signal<Materia[]>([]);
-  selectedMateria = signal<number | null>(null);
+  selectedMateria = signal<string | null>(null);
   docenteId       = signal<number | null>(null);
   estadisticas    = signal<any[]>([]);
 
@@ -49,7 +49,7 @@ export class DocenteReportesComponent implements OnInit {
         return this.docenteSvc.getMateriasByDocente(d.id).pipe(catchError(() => of([])));
       })
     ).subscribe(r => {
-      this.materias.set((r as any)?.results ?? r ?? []);
+      this.materias.set(Array.isArray(r) ? r : []);
       this.loadingMaterias.set(false);
       if (this.docenteId()) this.cargarEstadisticas();
     });
