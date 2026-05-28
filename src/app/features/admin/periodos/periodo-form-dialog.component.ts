@@ -7,6 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { PeriodosService } from '../../../core/services/periodos.service';
 import { Periodo } from '../../../core/models';
 import { signal } from '@angular/core';
@@ -41,6 +42,13 @@ import { signal } from '@angular/core';
             <mat-error>Requerido</mat-error>
           }
         </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Plan de estudios</mat-label>
+          <input matInput formControlName="plan_estudios" placeholder="Ej. ITI 2026" />
+          @if (form.get('plan_estudios')?.touched && form.get('plan_estudios')?.hasError('required')) {
+            <mat-error>Requerido</mat-error>
+          }
+        </mat-form-field>
         <mat-checkbox formControlName="activo">Periodo activo</mat-checkbox>
       </form>
     </mat-dialog-content>
@@ -59,12 +67,14 @@ export class PeriodoFormDialogComponent {
   private svc = inject(PeriodosService);
   private ref = inject(MatDialogRef<PeriodoFormDialogComponent>);
   private fb  = inject(FormBuilder);
+  private snack = inject(MatSnackBar);
   saving = signal(false);
 
   form = this.fb.group({
     nombre:      [this.data?.nombre ?? '', Validators.required],
     fecha_inicio:[this.data?.fecha_inicio ?? '', Validators.required],
     fecha_fin:   [this.data?.fecha_fin ?? '', Validators.required],
+    plan_estudios:[this.data?.plan_estudios ?? '', Validators.required],
     activo:      [this.data?.activo ?? true],
   });
 
@@ -74,6 +84,18 @@ export class PeriodoFormDialogComponent {
     const obs = this.data
       ? this.svc.update(this.data.id, this.form.value as any)
       : this.svc.create(this.form.value as any);
-    obs.subscribe({ next: () => this.ref.close(true), error: () => this.saving.set(false) });
+    obs.subscribe({
+      next: () => this.ref.close(true),
+      error: (err) => {
+        const detail = err?.error?.message
+          ?? err?.error?.detail
+          ?? err?.error?.non_field_errors?.[0]
+          ?? err?.error?.nombre?.[0]
+          ?? err?.error?.fecha_fin?.[0]
+          ?? 'No se pudo guardar el periodo';
+        this.snack.open(detail, 'Cerrar', { duration: 4500, panelClass: 'snack-error' });
+        this.saving.set(false);
+      }
+    });
   }
 }

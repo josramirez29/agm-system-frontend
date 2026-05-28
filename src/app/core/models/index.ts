@@ -10,7 +10,7 @@ export interface JwtPayload {
 
 export interface Periodo {
   id: number; nombre: string; fecha_inicio: string;
-  fecha_fin: string; activo: boolean;
+  fecha_fin: string; plan_estudios?: string; activo: boolean;
 }
 
 export interface Materia {
