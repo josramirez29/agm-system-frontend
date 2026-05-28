@@ -14,6 +14,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialogModule } from '@angular/material/dialog';
 import { AuthService } from '../../../core/services/auth.service';
 import { DocentesService } from '../../../core/services/docentes.service';
 import { CalificacionesService } from '../../../core/services/calificaciones.service';
@@ -21,7 +22,7 @@ import { Materia } from '../../../core/models';
 import { switchMap, catchError, of } from 'rxjs';
 
 interface Actividad {
-  id: number;
+  id: string;
   nombre: string;
   ponderacion: number;
   materia_id: string;
@@ -29,6 +30,7 @@ interface Actividad {
 
 interface ConcentradoRow {
   alumno_id: string;
+  nombre: string;
   promedio_exacto: number;
   promedio_redondeado: number;
 }
@@ -39,7 +41,8 @@ interface ConcentradoRow {
   imports: [
     CommonModule, ReactiveFormsModule, MatCardModule, MatButtonModule, MatIconModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatTabsModule, MatTableModule,
-    MatProgressSpinnerModule, MatSnackBarModule, MatDividerModule, MatChipsModule, MatTooltipModule
+    MatProgressSpinnerModule, MatSnackBarModule, MatDividerModule, MatChipsModule,
+    MatTooltipModule, MatDialogModule
   ],
   templateUrl: './docente-calificaciones.component.html',
   styleUrls: ['./docente-calificaciones.component.scss']
@@ -51,12 +54,14 @@ export class DocenteCalificacionesComponent implements OnInit {
   private snack      = inject(MatSnackBar);
   private fb         = inject(FormBuilder);
 
-  loadingMaterias = signal(true);
-  loadingPond     = signal(false);
-  guardandoPond   = signal(false);
-  loadingConc     = signal(false);
-  importandoCalif = signal<number | null>(null);
-  guardandoCalif  = signal<number | null>(null);
+  loadingMaterias  = signal(true);
+  loadingPond      = signal(false);
+  guardandoPond    = signal(false);
+  eliminandoPond   = signal(false);
+  loadingConc      = signal(false);
+  importandoCalif  = signal<number | null>(null);
+  guardandoCalif   = signal<number | null>(null);
+  reconfigurandoPond = signal(false);
 
   materias         = signal<Materia[]>([]);
   selectedMateria  = signal<Materia | null>(null);
@@ -65,14 +70,14 @@ export class DocenteCalificacionesComponent implements OnInit {
   sumaPonderacion  = signal(0);
 
   formPonderaciones!: FormGroup;
-  formCalif         = this.fb.group({
+  formCalif = this.fb.group({
     actividad_id: ['', Validators.required],
     alumno_id:    ['', Validators.required],
     valor:        [null as number | null, [Validators.required, Validators.min(0), Validators.max(100)]]
   });
 
-  colActividades  = ['nombre', 'ponderacion', 'acciones'];
-  colConcentrado  = ['alumno_id', 'promedio_exacto', 'promedio_redondeado'];
+  colActividades = ['nombre', 'ponderacion', 'acciones'];
+  colConcentrado = ['alumno_id', 'nombre', 'promedio_exacto', 'promedio_redondeado'];
 
   ngOnInit() {
     this.initFormPonderaciones();
@@ -91,6 +96,7 @@ export class DocenteCalificacionesComponent implements OnInit {
 
   initFormPonderaciones() {
     this.formPonderaciones = this.fb.group({ filas: this.fb.array([this.nuevaFila()]) });
+    this.filas.valueChanges.subscribe(() => this.calcularSuma());
   }
 
   get filas() { return this.formPonderaciones.get('filas') as FormArray; }
@@ -117,6 +123,7 @@ export class DocenteCalificacionesComponent implements OnInit {
     this.selectedMateria.set(mat);
     this.actividades.set([]);
     this.concentrado.set([]);
+    this.reconfigurandoPond.set(false);
     this.initFormPonderaciones();
     this.cargarPonderaciones(mat);
   }
@@ -134,7 +141,7 @@ export class DocenteCalificacionesComponent implements OnInit {
   }
 
   guardarPonderaciones() {
-    if (this.formPonderaciones.invalid) return;
+    if (this.formPonderaciones.invalid) { this.formPonderaciones.markAllAsTouched(); return; }
     if (this.sumaPonderacion() !== 100) {
       this.snack.open(`La suma es ${this.sumaPonderacion()}%. Debe ser exactamente 100%.`, 'OK', { duration: 5000 });
       return;
@@ -147,17 +154,36 @@ export class DocenteCalificacionesComponent implements OnInit {
     this.guardandoPond.set(true);
     this.califSvc.configurarPonderaciones(String(mat.id), ponderaciones).pipe(
       catchError(err => {
-        const msg = err.error?.detail ?? 'Error al guardar ponderaciones';
-        this.snack.open(msg, 'OK', { duration: 6000 });
+        this.snack.open(err.error?.detail ?? 'Error al guardar', 'OK', { duration: 6000 });
         return of(null);
       })
     ).subscribe(res => {
       this.guardandoPond.set(false);
       if (res) {
         this.snack.open('Ponderaciones configuradas correctamente', 'OK', { duration: 4000 });
+        this.reconfigurandoPond.set(false);
         this.cargarPonderaciones(mat);
       }
     });
+  }
+
+  iniciarReconfiguracion() {
+    // Pre-llenar el formulario con los valores actuales
+    const acts = this.actividades();
+    while (this.filas.length > 0) this.filas.removeAt(0);
+    acts.forEach(a => {
+      this.filas.push(this.fb.group({
+        nombre:      [a.nombre, Validators.required],
+        ponderacion: [a.ponderacion, [Validators.required, Validators.min(1), Validators.max(100)]]
+      }));
+    });
+    this.calcularSuma();
+    this.reconfigurandoPond.set(true);
+  }
+
+  cancelarReconfiguracion() {
+    this.reconfigurandoPond.set(false);
+    this.initFormPonderaciones();
   }
 
   cargarConcentrado() {
@@ -183,8 +209,7 @@ export class DocenteCalificacionesComponent implements OnInit {
       alumno_id:    v.alumno_id!,
       valor:        Number(v.valor)
     }).pipe(catchError(err => {
-      const msg = err.error?.detail ?? 'Error al registrar calificación';
-      this.snack.open(msg, 'OK', { duration: 5000 });
+      this.snack.open(err.error?.detail ?? 'Error al registrar', 'OK', { duration: 5000 });
       return of(null);
     })).subscribe(res => {
       this.guardandoCalif.set(null);
@@ -195,17 +220,16 @@ export class DocenteCalificacionesComponent implements OnInit {
     });
   }
 
-  importarExcel(actividadId: number, event: Event) {
+  importarExcel(actividadId: string, event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
     input.value = '';
-    const idx = this.actividades().findIndex(a => a.id === actividadId);
+    const idx = this.actividades().findIndex(a => String(a.id) === String(actividadId));
     this.importandoCalif.set(idx);
     this.califSvc.importarExcel(String(actividadId), file).pipe(
       catchError(err => {
-        const msg = err.error?.detail ?? 'Error al importar Excel';
-        this.snack.open(msg, 'OK', { duration: 5000 });
+        this.snack.open(err.error?.detail ?? 'Error al importar Excel', 'OK', { duration: 5000 });
         return of(null);
       })
     ).subscribe(res => {

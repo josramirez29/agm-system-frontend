@@ -9,9 +9,9 @@ import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2
 import { ChartData, ChartOptions } from 'chart.js';
 import { AuthService } from '../../../core/services/auth.service';
 import { DocentesService } from '../../../core/services/docentes.service';
-import { AsistenciasService } from '../../../core/services/asistencias.service';
+import { AlumnosService } from '../../../core/services/alumnos.service';
 import { Materia } from '../../../core/models';
-import { switchMap, catchError, of } from 'rxjs';
+import { switchMap, catchError, of, forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-docente-dashboard',
@@ -25,7 +25,7 @@ import { switchMap, catchError, of } from 'rxjs';
 export class DocenteDashboardComponent implements OnInit {
   private auth       = inject(AuthService);
   private docenteSvc = inject(DocentesService);
-  private asistSvc   = inject(AsistenciasService);
+  private alumnosSvc = inject(AlumnosService);
 
   loading   = signal(true);
   materias  = signal<Materia[]>([]);
@@ -36,12 +36,12 @@ export class DocenteDashboardComponent implements OnInit {
 
   barOptions: ChartOptions<'bar'> = {
     responsive: true,
-    plugins: { legend: { display: false }, title: { display: true, text: 'Asistencias por materia' } },
-    scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } } }
+    plugins: { legend: { display: false }, title: { display: true, text: 'Alumnos inscritos por materia' } },
+    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
   };
   pieOptions: ChartOptions<'doughnut'> = {
     responsive: true,
-    plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Distribución de asistencia' } }
+    plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Distribución de alumnos' } }
   };
 
   ngOnInit() {
@@ -57,22 +57,30 @@ export class DocenteDashboardComponent implements OnInit {
       const mats: Materia[] = res?.results ?? res ?? [];
       this.materias.set(mats);
       this.buildCharts(mats);
-      this.loading.set(false);
     });
   }
 
   buildCharts(mats: Materia[]) {
-    const labels = mats.map(m => m.nombre ?? `NRC ${m.nrc}`);
-    const data   = mats.map(() => Math.floor(Math.random() * 40) + 60);
-    this.barData.set({
-      labels,
-      datasets: [{ data, backgroundColor: '#1565c0', borderRadius: 6, label: 'Asistencia %' }]
-    });
-    const presente = data.reduce((a, b) => a + b, 0);
-    const ausente  = data.length * 100 - presente;
-    this.pieData.set({
-      labels: ['Presente', 'Ausente'],
-      datasets: [{ data: [presente, ausente], backgroundColor: ['#1565c0', '#ef9a9a'] }]
+    if (!mats.length) {
+      this.loading.set(false);
+      return;
+    }
+    const calls = mats.map(m =>
+      this.alumnosSvc.getByMateria(m.nrc ?? '').pipe(catchError(() => of([])))
+    );
+    forkJoin(calls).subscribe(results => {
+      const labels = mats.map(m => m.nombre ?? `NRC ${m.nrc}`);
+      const counts = results.map((r: any) => (Array.isArray(r) ? r : r?.results ?? []).length);
+      this.barData.set({
+        labels,
+        datasets: [{ data: counts, backgroundColor: '#1565c0', borderRadius: 6, label: 'Alumnos' }]
+      });
+      const total = counts.reduce((a: number, b: number) => a + b, 0);
+      this.pieData.set({
+        labels: labels,
+        datasets: [{ data: counts, backgroundColor: ['#1565c0', '#42a5f5', '#90caf9', '#bbdefb'] }]
+      });
+      this.loading.set(false);
     });
   }
 }

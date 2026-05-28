@@ -45,14 +45,14 @@ export class ReportesService {
 
   getEstadisticasDocente(docenteId: number | string, page = 1, limit = 10) {
     const params = new HttpParams().set('page', page).set('limit', limit);
-    return this.http.get<any>(`${this.base}/estadisticas/docente/${docenteId}`, { params }).pipe(
+    return this.http.get<any>(`${this.base}/reportes/estadisticas/docente/${docenteId}`, { params }).pipe(
       map(r => r.data ?? r)
     );
   }
 
   getEstadisticasAlumno(alumnoId: number | string, page = 1, limit = 10) {
     const params = new HttpParams().set('page', page).set('limit', limit);
-    return this.http.get<any>(`${this.base}/estadisticas/alumno/${alumnoId}`, { params }).pipe(
+    return this.http.get<any>(`${this.base}/reportes/estadisticas/alumno/${alumnoId}`, { params }).pipe(
       map(r => r.data ?? r)
     );
   }

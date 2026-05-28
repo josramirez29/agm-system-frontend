@@ -113,3 +113,24 @@
 
 .aprobado { color: #2e7d32; font-size: 1rem; }
 .reprobado { color: #c62828; font-size: 1rem; }
+
+.warn-text { color: #e65100; font-weight: 500; }
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.card-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}

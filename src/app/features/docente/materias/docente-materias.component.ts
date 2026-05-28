@@ -114,7 +114,7 @@ export class DocenteMateriasComponent implements OnInit {
     const est = this.estados()[idx];
     if (!confirm(`¿Cerrar la materia "${est.materia.nombre}" (NRC: ${est.materia.nrc})? Esta acción notificará a todos los alumnos inscritos.`)) return;
     this.cerrando.set(idx);
-    this.materiasSvc.cerrar(est.materia.id).pipe(catchError(err => {
+    this.materiasSvc.cerrarPorNrc(est.materia.nrc).pipe(catchError(err => {
       const msg = err.error?.detail ?? 'Error al cerrar materia';
       this.snack.open(msg, 'OK', { duration: 5000 });
       return of(null);

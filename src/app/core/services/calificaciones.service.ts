@@ -50,4 +50,14 @@ export class CalificacionesService {
   configurarPonderaciones(materiaId: string | number, ponderaciones: any[]) {
     return this.http.post<any>(`${this.base}/calificaciones/ponderaciones/${materiaId}`, { ponderaciones });
   }
+
+  deletePonderaciones(materiaId: string | number) {
+    return this.http.delete<any>(`${this.base}/calificaciones/ponderaciones/${materiaId}`);
+  }
+
+  getMisCalificaciones(matricula: string) {
+    return this.http.get<any>(`${this.base}/calificaciones/alumno/${matricula}`).pipe(
+      map(r => r.data ?? r)
+    );
+  }
 }

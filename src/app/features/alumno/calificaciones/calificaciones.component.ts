@@ -6,44 +6,73 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatChipsModule } from '@angular/material/chips';
 import { AuthService } from '../../../core/services/auth.service';
-import { ReportesService } from '../../../core/services/reportes.service';
-import { catchError, of } from 'rxjs';
+import { AlumnosService } from '../../../core/services/alumnos.service';
+import { CalificacionesService } from '../../../core/services/calificaciones.service';
+import { catchError, of, switchMap, forkJoin } from 'rxjs';
+
+interface ActividadCalif {
+  nombre: string;
+  ponderacion: number;
+  calificacion: number;
+  puntos_aportados: number;
+}
+
+interface MateriaCalif {
+  materia_id: string;
+  actividades: ActividadCalif[];
+  promedio_exacto: number;
+  promedio_redondeado: number;
+}
 
 @Component({
   selector: 'app-calificaciones',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatButtonModule, MatIconModule,
-            MatTableModule, MatProgressSpinnerModule, MatSnackBarModule, MatTabsModule],
+  imports: [
+    CommonModule, MatCardModule, MatButtonModule, MatIconModule, MatTableModule,
+    MatProgressSpinnerModule, MatSnackBarModule, MatExpansionModule, MatChipsModule
+  ],
   templateUrl: './calificaciones.component.html',
   styleUrls: ['./calificaciones.component.scss']
 })
 export class CalificacionesComponent implements OnInit {
-  private auth      = inject(AuthService);
-  private reporteSvc = inject(ReportesService);
+  private auth       = inject(AuthService);
+  private alumnoSvc  = inject(AlumnosService);
+  private califSvc   = inject(CalificacionesService);
   private snack      = inject(MatSnackBar);
 
-  loading     = signal(false);
-  alumnoId    = signal<number | null>(null);
-  estadisticas = signal<any[]>([]);
+  loading    = signal(true);
+  matricula  = signal<string>('');
+  materias   = signal<MateriaCalif[]>([]);
 
-  columns = ['materia_id', 'periodo_nombre', 'promedio_calificaciones', 'porcentaje_asistencia', 'total_sesiones', 'sesiones_presentes'];
-  ds = new MatTableDataSource<any>([]);
+  colActs = ['nombre', 'ponderacion', 'calificacion', 'puntos_aportados'];
 
   ngOnInit() {
-    const user = this.auth.currentUser();
-    if (!user) return;
-    this.alumnoId.set(user.id);
-    this.load(user.id);
-  }
+    const email = this.auth.currentUser()?.email ?? '';
+    if (!email) { this.loading.set(false); return; }
 
-  load(id: number) {
-    this.loading.set(true);
-    this.reporteSvc.getEstadisticasAlumno(id).pipe(catchError(() => of({ items: [] }))).subscribe(r => {
-      const rows = (r as any)?.items ?? [];
-      this.estadisticas.set(rows);
-      this.ds.data = rows;
+    // Buscar el alumno por email en ms-docentes para obtener su matrícula
+    this.alumnoSvc.getAll(1, email).pipe(
+      switchMap((res: any) => {
+        const list: any[] = res?.results ?? res ?? [];
+        const alumno = list.find((a: any) =>
+          a.email?.toLowerCase() === email.toLowerCase()
+        );
+        if (!alumno?.matricula) {
+          return of(null);
+        }
+        this.matricula.set(alumno.matricula);
+        return this.califSvc.getMisCalificaciones(alumno.matricula).pipe(
+          catchError(() => of(null))
+        );
+      }),
+      catchError(() => of(null))
+    ).subscribe(data => {
+      if (data?.materias) {
+        this.materias.set(data.materias);
+      }
       this.loading.set(false);
     });
   }

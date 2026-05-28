@@ -33,6 +33,10 @@ export class MateriasService {
     return this.http.post(`${this.base}/materias/${id}/cerrar/`, {});
   }
 
+  cerrarPorNrc(nrc: string) {
+    return this.http.post(`${this.base}/materias/cerrar-por-nrc/`, { nrc });
+  }
+
   importPdf(periodoId: number, file: File) {
     const fd = new FormData();
     fd.append('periodo_id', String(periodoId));

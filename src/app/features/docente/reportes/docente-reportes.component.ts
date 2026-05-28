@@ -64,7 +64,6 @@ export class DocenteReportesComponent implements OnInit {
       this.estadisticas.set(rows);
       this.dataSource.data = rows;
       this.loadingReporte.set(false);
-      if (!rows.length) this.snack.open('Sin estadísticas registradas aún', '', { duration: 2500 });
     });
   }
 

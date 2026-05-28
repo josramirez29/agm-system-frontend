@@ -13,15 +13,15 @@ export class AsistenciasService {
       materia_id: String(payload.materia_id),
       docente_id: String(payload.docente_id)
     };
-    return this.http.post<any>(`${this.base}/sesiones/iniciar`, body);
+    return this.http.post<any>(`${this.base}/asistencias/sesiones/iniciar`, body);
   }
 
   cerrarSesion(materiaId: string | number) {
-    return this.http.delete(`${this.base}/sesiones/${String(materiaId)}/cerrar`);
+    return this.http.delete(`${this.base}/asistencias/sesiones/${String(materiaId)}/cerrar`);
   }
 
   getSesionActiva(docenteId: number) {
-    return this.http.get<any>(`${this.base}/sesiones/activa/?docente_id=${docenteId}`).pipe(
+    return this.http.get<any>(`${this.base}/asistencias/sesiones/activa/?docente_id=${docenteId}`).pipe(
       map(r => r.data ?? r)
     );
   }
@@ -46,13 +46,13 @@ export class AsistenciasService {
       alumno_id: String(payload.alumno_id),
       materia_id: String(payload.materia_id),
     };
-    return this.http.post<any>(`${this.base}/qr/generar`, body).pipe(
+    return this.http.post<any>(`${this.base}/asistencias/qr/generar`, body).pipe(
       map(r => r.data ?? r)
     );
   }
 
   getEstadisticasByMateria(materiaId: number) {
-    return this.http.get<any>(`${this.base}/estadisticas/materia/${materiaId}/`).pipe(
+    return this.http.get<any>(`${this.base}/asistencias/estadisticas/materia/${materiaId}/`).pipe(
       map(r => r.data ?? r)
     );
   }

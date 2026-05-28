@@ -28,12 +28,17 @@
     @if (selectedMateria()) {
       @if (loadingPond()) {
         <div class="center"><mat-spinner /></div>
-      } @else if (actividades().length === 0) {
-        <!-- Sin ponderaciones: formulario de configuración -->
+      } @else if (actividades().length === 0 || reconfigurandoPond()) {
+        <!-- Sin ponderaciones o reconfiguración: formulario -->
         <mat-card class="config-card">
           <mat-card-header>
-            <mat-card-title>Configurar Ponderaciones</mat-card-title>
-            <mat-card-subtitle>Define las categorías de evaluación. La suma debe ser exactamente 100%.</mat-card-subtitle>
+            <mat-card-title>{{ reconfigurandoPond() ? 'Reconfigurar Ponderaciones' : 'Configurar Ponderaciones' }}</mat-card-title>
+            <mat-card-subtitle>
+              Define las categorías de evaluación. La suma debe ser exactamente 100%.
+              @if (reconfigurandoPond()) {
+                <span class="warn-text"> ⚠️ Al reconfigurar se borrarán todas las calificaciones actuales.</span>
+              }
+            </mat-card-subtitle>
           </mat-card-header>
           <mat-card-content>
             <form [formGroup]="formPonderaciones" (ngSubmit)="guardarPonderaciones()">
@@ -76,11 +81,18 @@
                 </span>
               </div>
 
-              <button mat-raised-button color="primary" type="submit"
-                      [disabled]="guardandoPond() || sumaPonderacion() !== 100">
-                @if (guardandoPond()) { <mat-spinner diameter="20" /> } @else { <mat-icon>save</mat-icon> }
-                Guardar ponderaciones
-              </button>
+              <div class="form-actions">
+                <button mat-raised-button color="primary" type="submit"
+                        [disabled]="guardandoPond() || sumaPonderacion() !== 100">
+                  @if (guardandoPond()) { <mat-spinner diameter="20" /> } @else { <mat-icon>save</mat-icon> }
+                  Guardar ponderaciones
+                </button>
+                @if (reconfigurandoPond()) {
+                  <button mat-stroked-button type="button" (click)="cancelarReconfiguracion()">
+                    Cancelar
+                  </button>
+                }
+              </div>
             </form>
           </mat-card-content>
         </mat-card>
@@ -95,6 +107,13 @@
                 <mat-card-header>
                   <mat-card-title>Actividades configuradas</mat-card-title>
                   <mat-card-subtitle>Total ponderado: {{ sumaPonderacion() }}%</mat-card-subtitle>
+                  <div class="card-header-actions">
+                    <button mat-stroked-button color="warn" type="button"
+                            (click)="iniciarReconfiguracion()"
+                            matTooltip="Borrar y reconfigurar ponderaciones">
+                      <mat-icon>tune</mat-icon> Reconfigurar
+                    </button>
+                  </div>
                 </mat-card-header>
                 <mat-card-content>
                   <table mat-table [dataSource]="actividades()" class="full-table">
@@ -172,7 +191,7 @@
                   <mat-card-content>
                     <mat-icon class="empty-icon">assignment</mat-icon>
                     <p>Sin calificaciones registradas aún.</p>
-                    <p class="hint">Registra calificaciones en la pestaña "Actividades" o importa un Excel.</p>
+                    <p class="hint">Importa un Excel o registra calificaciones individuales en la pestaña "Actividades".</p>
                   </mat-card-content>
                 </mat-card>
               } @else {
@@ -188,12 +207,16 @@
                           <th mat-header-cell *matHeaderCellDef>Matrícula</th>
                           <td mat-cell *matCellDef="let r">{{ r.alumno_id }}</td>
                         </ng-container>
+                        <ng-container matColumnDef="nombre">
+                          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+                          <td mat-cell *matCellDef="let r">{{ r.nombre }}</td>
+                        </ng-container>
                         <ng-container matColumnDef="promedio_exacto">
                           <th mat-header-cell *matHeaderCellDef>Promedio exacto</th>
                           <td mat-cell *matCellDef="let r">{{ r.promedio_exacto | number:'1.2-2' }}</td>
                         </ng-container>
                         <ng-container matColumnDef="promedio_redondeado">
-                          <th mat-header-cell *matHeaderCellDef>Promedio redondeado</th>
+                          <th mat-header-cell *matHeaderCellDef>Promedio final</th>
                           <td mat-cell *matCellDef="let r">
                             <strong [class]="r.promedio_redondeado >= 60 ? 'aprobado' : 'reprobado'">
                               {{ r.promedio_redondeado }}
