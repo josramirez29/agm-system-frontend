@@ -166,3 +166,23 @@ mat-spinner {
     max-width: 100%;
   }
 }
+
+.forgot-password-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+  margin-top: -0.5rem;
+
+  .forgot-link {
+    color: var(--blue-pale);
+    font-size: 12px;
+    text-decoration: none;
+    transition: color 0.2s ease;
+    font-family: 'Syne', sans-serif;
+
+    &:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+  }
+}

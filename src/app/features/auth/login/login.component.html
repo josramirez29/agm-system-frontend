@@ -32,6 +32,10 @@
           }
         </mat-form-field>
 
+        <div class="forgot-password-container">
+          <a routerLink="/forgot-password" class="forgot-link">¿Olvidaste tu contraseña?</a>
+        </div>
+
         <button mat-flat-button class="submit-btn" type="submit" [disabled]="loading()">
           @if (loading()) {
             <mat-spinner diameter="20" />
